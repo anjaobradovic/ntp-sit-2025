@@ -1,8 +1,8 @@
-# ntp-sit-2025
-
-Hangman+ (Rust projekat)
+Hangman+ za studente medicine
 1. Uvod
-Ovaj projekat predstavlja implementaciju igre Hangman+ u programskom jeziku Rust. Igra je terminalna aplikacija koja omogućava korisnicima da se registruju, prijave, biraju teme i nivoe težine, igraju protiv kompjutera ili drugog korisnika, i prate statistiku svojih igara. Takođe, postoji admin panel za upravljanje korisnicima, riječima, temama i achievementima. Cilj projekta je demonstracija sposobnosti upravljanja korisnicima, bazom podataka, višemodularnog programiranja i implementacije logike igre u Rustu.
+Ovaj projekat predstavlja implementaciju igre Hangman+ u programskom jeziku Rust. Igra je terminalna aplikacija koja omogućava korisnicima da se registruju, prijave i biraju temu, jezik pogadjanja, igraju protiv drugog korisnika, i prate statistiku svojih igara. Takođe, postoji admin panel za upravljanje korisnicima, riječima, temama… 
+Ideja jeste olaksati i učinit zanimljivo ucenje prvenstveno studentima medicine a zatim i svim ostalim korisnicima zainteresovanim za anatomiju ljudskog tijela.
+Igra je koncepirana tako da se korisnik prijavljuje, bira jezik (srpski/latinski), kao i temu (kosti/organi) i zatim pristupa samoj igri. Prikazace mu se fotografije i on ce kao zadatak imati da pogodi naziv sa slike uz sto manje gresaka. Svaka greska ce rezultirati crtanjem dijela tijela “cicaglise” na vjesalu i eventualni poraz ili pobjedu.
 
 2. Funkcionalni zahtevi
 2.1. Korisnički nalozi
@@ -13,13 +13,12 @@ Evidencija statistike (pobjede, porazi)
 Meni:
 Play single player
 Play multiplayer
-Stats
+Stats (prijavljeni korisnik)
 Settings
 Logout
 (Admin) Admin panel
 2.3. Single Player
-Izbor teme (Animals, Movies, Geography...)
-Izbor nivoa težine (Easy / Medium / Hard)
+Izbor teme
 ASCII vješala sa 7 faza:
 Glava
 Tijelo
@@ -30,25 +29,20 @@ Lijeva ruka
 Kosa
 Prikaz pobjede ili poraza
 Evidencija rezultata u bazi
-2.4. Multiplayer (offline)
-Runda 1: Igrač 1 unosi riječ, Igrač 2 pogađa
-Runda 2: Igrač 2 unosi riječ, Igrač 1 pogađa
-Pobjednik je onaj sa manje nacrtanih dijelova tijela
-Evidencija rezultata u bazi
 2.5. Statistika
 Broj odigranih igara
 Broj pobjeda i poraza
 Win rate
-Prosječan broj grešaka
 2.6. Admin panel
 Upravljanje korisnicima (dodavanje, brisanje, reset šifre)
 Upravljanje riječima (dodavanje, brisanje, izmjena)
 Upravljanje temama
+Upravljanje jezicima
+
 
 3. Ne-funkcionalni zahtevi
 Implementacija u Rustu
 SQL baza 
-Terminal UI
 Modularna arhitektura
 Pouzdanost i validacija unosa
 Čuvanje podataka u bazi
