@@ -1,12 +1,11 @@
-import "./css/LandingPage.css";
+import "../styles/LandingPage.css";
 
 
-export default function LandingPage() {
-  const handleContinue = () => {
-    // placeholder (kasnije ide navigacija na /auth)
-    console.log("Continue -> Auth page");
-  };
+type Props = {
+  onOpenAuth: () => void;
+};
 
+export default function LandingPage({ onOpenAuth }: Props) {
   return (
     <div className="lp-root">
       <div className="lp-card">
@@ -17,11 +16,10 @@ export default function LandingPage() {
         </h1>
 
         <p className="lp-subtitle">
-          Your Hangman+ — learn bones and organs through images, guesses, and a
-          little pressure.
+          Your Hangman+ — learn bones and organs through images, guesses, and a little pressure.
         </p>
 
-        <button className="lp-button" onClick={handleContinue}>
+        <button className="lp-button" onClick={onOpenAuth}>
           Log in / Register
         </button>
 
