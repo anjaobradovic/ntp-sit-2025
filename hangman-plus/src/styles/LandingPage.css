@@ -1,24 +1,16 @@
-:root {
-  --bg1: #07131f;
-  --bg2: #0b1f33;
-  --card: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.12);
-  --text: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.72);
-  --accent: #5dd6ff;
-}
-
 .lp-root {
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 24px;
-  background: radial-gradient(1200px 600px at 20% 20%, #123c5c 0%, transparent 55%),
-              radial-gradient(900px 500px at 80% 30%, #1b2a6b 0%, transparent 55%),
-              linear-gradient(180deg, var(--bg1), var(--bg2));
+
+  background:
+    radial-gradient(1200px 600px at 20% 20%, rgb(24, 131, 113) 0%, transparent 55%),
+    radial-gradient(900px 500px at 80% 30%, rgba(20, 201, 176, 0.18) 0%, transparent 55%),
+    linear-gradient(180deg, var(--bg1), var(--bg2));
+
   color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji",
-    "Segoe UI Emoji";
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
 }
 
 .lp-card {
@@ -51,7 +43,7 @@
 }
 
 .lp-accent {
-  color: var(--accent);
+  color: var(--mint);
 }
 
 .lp-subtitle {
@@ -68,22 +60,18 @@
   cursor: pointer;
   padding: 14px 18px;
   border-radius: 14px;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 15px;
-  color: #06121b;
-  background: linear-gradient(180deg, #7fe5ff, #4fcfff);
-  box-shadow: 0 12px 25px rgba(93, 214, 255, 0.25);
+  color: #041615;
+  background: linear-gradient(180deg, var(--mint), var(--mint-2));
+  box-shadow: 0 12px 25px rgba(57, 242, 213, 0.22);
   transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
 
 .lp-button:hover {
   transform: translateY(-1px);
   filter: brightness(1.02);
-  box-shadow: 0 16px 34px rgba(93, 214, 255, 0.32);
-}
-
-.lp-button:active {
-  transform: translateY(0px) scale(0.99);
+  box-shadow: 0 16px 34px rgba(57, 242, 213, 0.30);
 }
 
 .lp-footnote {
