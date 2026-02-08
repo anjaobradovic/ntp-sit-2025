@@ -16,11 +16,15 @@ export default function RegisterModal({ open, onClose, onSuccess, onSwitchToLogi
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
-  if (!open) return null;
+  if (!open) return null; 
 
   const submit = async () => {
+    if (loading) return;
     setError("");
+    setLoading(true);
+
     try {
       await safeInvoke<void>("register_user", {
         firstName,
@@ -30,14 +34,16 @@ export default function RegisterModal({ open, onClose, onSuccess, onSwitchToLogi
         password,
       });
 
-      // auto-login posle registracije (optional)
       const res = await safeInvoke<{ session_token: string }>("login_user", {
         identifier: username,
         password,
       });
+
       onSuccess(res.session_token);
     } catch (e: any) {
       setError(e?.message ?? String(e));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,8 +82,8 @@ export default function RegisterModal({ open, onClose, onSuccess, onSwitchToLogi
             <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
 
-          <button className="btn-primary" onClick={submit}>
-            Create account
+          <button className="btn-primary" onClick={submit} disabled={loading}>
+            {loading ? "Creating..." : "Create account"}
           </button>
 
           {error && <div className="error">{error}</div>}

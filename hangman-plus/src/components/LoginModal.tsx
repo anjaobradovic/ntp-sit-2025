@@ -13,11 +13,15 @@ export default function LoginModal({ open, onClose, onSuccess, onSwitchToRegiste
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(false); 
 
-  if (!open) return null;
+  if (!open) return null; 
 
   const submit = async () => {
+    if (loading) return;
     setError("");
+    setLoading(true);
+
     try {
       const res = await safeInvoke<{ session_token: string }>("login_user", {
         identifier,
@@ -26,6 +30,8 @@ export default function LoginModal({ open, onClose, onSuccess, onSwitchToRegiste
       onSuccess(res.session_token);
     } catch (e: any) {
       setError(e?.message ?? String(e));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,8 +54,8 @@ export default function LoginModal({ open, onClose, onSuccess, onSwitchToRegiste
             <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
 
-          <button className="btn-primary" onClick={submit}>
-            Continue
+          <button className="btn-primary" onClick={submit} disabled={loading}>
+            {loading ? "Signing in..." : "Continue"}
           </button>
 
           {error && <div className="error">{error}</div>}

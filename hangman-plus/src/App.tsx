@@ -7,25 +7,20 @@ import RegisterModal from "./components/RegisterModal";
 import Toast from "./components/Toast";
 
 type Screen = "landing" | "home";
-
 const SESSION_KEY = "hangman_session_token";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
-
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
 
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
 
-  const showToast5s = (msg: string, after?: () => void) => {
+  const showToast = (msg: string, ms = 2500) => {
     setToastMsg(msg);
     setToastOpen(true);
-    setTimeout(() => {
-      setToastOpen(false);
-      after?.();
-    }, 5000);
+    setTimeout(() => setToastOpen(false), ms);
   };
 
   const openAuth = () => {
@@ -36,18 +31,15 @@ export default function App() {
   const onLoginSuccess = (token: string) => {
     localStorage.setItem(SESSION_KEY, token);
     setLoginOpen(false);
-
-    showToast5s("Successfully logged in.", () => {
-      setScreen("home");
-    });
+    setScreen("home");
+    showToast("Uspješno ste se prijavili ✅");
   };
 
-  const onRegisterSuccess = () => {
+  const onRegisterSuccess = (token: string) => {
+    localStorage.setItem(SESSION_KEY, token);
     setRegisterOpen(false);
-
-    showToast5s("Successfully registered.", () => {
-      setLoginOpen(true);
-    });
+    setScreen("home");
+    showToast("Uspješno ste se registrovali ✅");
   };
 
   const switchToRegister = () => {
@@ -63,7 +55,7 @@ export default function App() {
   const onLogout = () => {
     localStorage.removeItem(SESSION_KEY);
     setScreen("landing");
-    showToast5s("Logged out.");
+    showToast("Odjavljeni ste.");
   };
 
   return (
