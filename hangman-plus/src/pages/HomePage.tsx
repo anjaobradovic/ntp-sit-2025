@@ -5,18 +5,34 @@ type Props = {
   onLogout?: () => void;
 };
 
-type Topic = "MUSCLES" | "BONES" | "";
-type Mode = "EASY" | "HARD" | "";
+type Category = "ORGANS" | "BONES" | "";
+type Language = "EN" | "LAT" | "";
+type Difficulty = "EASY" | "HARD" | "";
 
 export default function HomePage({ onLogout }: Props) {
-  const [topic, setTopic] = useState<Topic>("");
-  const [mode, setMode] = useState<Mode>("");
+  const [category, setCategory] = useState<Category>("");
+  const [language, setLanguage] = useState<Language>("");
+  const [difficulty, setDifficulty] = useState<Difficulty>("");
 
-  const canPlay = useMemo(() => Boolean(topic && mode), [topic, mode]);
+  const maxWrong = useMemo(() => {
+    if (!difficulty) return 0;
+    return difficulty === "EASY" ? 6 : 3;
+  }, [difficulty]);
+
+  const canPlay = useMemo(
+    () => Boolean(category && language && difficulty),
+    [category, language, difficulty]
+  );
 
   const handlePlay = () => {
     if (!canPlay) return;
-    console.log("PLAY:", { topic, mode });
+
+    console.log("PLAY:", {
+      category,
+      language,
+      difficulty,
+      maxWrong,
+    });
   };
 
   return (
@@ -25,7 +41,9 @@ export default function HomePage({ onLogout }: Props) {
         <div className="hp-topbar">
           <div>
             <h1 className="hp-title">Hangman+</h1>
-            <p className="hp-subtitle">Choose a topic and difficulty, then press Play.</p>
+            <p className="hp-subtitle">
+              Pick a category, language, and difficulty, then press Play.
+            </p>
           </div>
 
           {onLogout && (
@@ -35,42 +53,71 @@ export default function HomePage({ onLogout }: Props) {
           )}
         </div>
 
-        {/* TOPIC */}
+        {/* CATEGORY */}
         <section className="hp-section">
           <div className="hp-section-header">
-            <span className="hp-section-title">Topic</span>
-            {topic && (
+            <span className="hp-section-title">Category</span>
+            {category && (
               <span className="hp-pill">
-                {topic === "MUSCLES" ? "Muscles" : "Bones"}
+                {category === "ORGANS" ? "Organs" : "Bones"}
               </span>
             )}
           </div>
 
           <div className="hp-row">
             <ChoiceCard
-              title="Muscles"
-              desc="Muscular system"
-              icon="💪"
-              selected={topic === "MUSCLES"}
-              onClick={() => setTopic("MUSCLES")}
+              title="Organs"
+              desc="Anatomy – organs"
+              icon="🫀"
+              selected={category === "ORGANS"}
+              onClick={() => setCategory("ORGANS")}
             />
             <ChoiceCard
               title="Bones"
               desc="Skeletal system"
               icon="🦴"
-              selected={topic === "BONES"}
-              onClick={() => setTopic("BONES")}
+              selected={category === "BONES"}
+              onClick={() => setCategory("BONES")}
             />
           </div>
         </section>
 
-        {/* MODE */}
+        {/* LANGUAGE */}
         <section className="hp-section">
           <div className="hp-section-header">
-            <span className="hp-section-title">Mode</span>
-            {mode && (
+            <span className="hp-section-title">Language</span>
+            {language && (
               <span className="hp-pill">
-                {mode === "EASY" ? "Easy (English)" : "Hard (Latin)"}
+                {language === "EN" ? "English" : "Latin"}
+              </span>
+            )}
+          </div>
+
+          <div className="hp-row">
+            <ChoiceCard
+              title="English"
+              desc="Guess in English"
+              icon="🇬🇧"
+              selected={language === "EN"}
+              onClick={() => setLanguage("EN")}
+            />
+            <ChoiceCard
+              title="Latin"
+              desc="Guess in Latin"
+              icon="🏛️"
+              selected={language === "LAT"}
+              onClick={() => setLanguage("LAT")}
+            />
+          </div>
+        </section>
+
+        {/* DIFFICULTY */}
+        <section className="hp-section">
+          <div className="hp-section-header">
+            <span className="hp-section-title">Difficulty</span>
+            {difficulty && (
+              <span className="hp-pill">
+                {difficulty === "EASY" ? "Easy" : "Hard"} • {maxWrong} mistakes
               </span>
             )}
           </div>
@@ -78,17 +125,17 @@ export default function HomePage({ onLogout }: Props) {
           <div className="hp-row">
             <ChoiceCard
               title="Easy"
-              desc="Guess words in English"
-              icon="🇬🇧"
-              selected={mode === "EASY"}
-              onClick={() => setMode("EASY")}
+              desc="6 mistakes: head, body, arms (L/R), legs (L/R)"
+              icon="🙂"
+              selected={difficulty === "EASY"}
+              onClick={() => setDifficulty("EASY")}
             />
             <ChoiceCard
               title="Hard"
-              desc="Guess terms in Latin"
-              icon="🏛️"
-              selected={mode === "HARD"}
-              onClick={() => setMode("HARD")}
+              desc="3 mistakes: head, body, arms together + legs together"
+              icon="😈"
+              selected={difficulty === "HARD"}
+              onClick={() => setDifficulty("HARD")}
             />
           </div>
         </section>
@@ -104,8 +151,8 @@ export default function HomePage({ onLogout }: Props) {
 
         <div className="hp-hint">
           {!canPlay
-            ? "Select a topic and a mode to enable Play."
-            : "Ready. Press Play."}
+            ? "Select category, language, and difficulty to enable Play."
+            : `Ready. You will have ${maxWrong} mistakes.`}
         </div>
       </div>
     </div>
