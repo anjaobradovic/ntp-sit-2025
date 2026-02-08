@@ -1,13 +1,11 @@
-import type { InvokeArgs } from "@tauri-apps/api/core";
+import { invoke, type InvokeArgs } from "@tauri-apps/api/core";
 
-// u browseru window.__TAURI__ ne postoji
 export async function safeInvoke<T>(cmd: string, args?: InvokeArgs): Promise<T> {
   const w = window as any;
 
-  if (!w.__TAURI__) {
-    throw new Error("Tauri API is not available in the browser. Open the app in the Tauri window (npm run tauri dev).");
+  if (!w.__TAURI_INTERNALS__) {
+    throw new Error("This action requires the Hangman+ desktop app (Tauri).");
   }
 
-  const mod = await import("@tauri-apps/api/core");
-  return mod.invoke<T>(cmd, args);
+  return invoke<T>(cmd, args);
 }

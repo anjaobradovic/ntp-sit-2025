@@ -2,13 +2,17 @@ use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use std::fs;
 use std::path::PathBuf;
 
+// export pod-modula (db/cards.rs)
+pub mod cards;
+
 pub async fn init_db(db_path: PathBuf) -> Result<SqlitePool, String> {
     // napravi parent folder da SQLite može da kreira fajl
     if let Some(parent) = db_path.parent() {
-        fs::create_dir_all(parent).map_err(|e| format!("Create db dir failed: {e}"))?;
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Create db dir failed: {e}"))?;
     }
 
-    // NOTE: sqlx sqlite URL format
+    // sqlx SQLite URL
     let db_url = format!("sqlite:{}", db_path.display());
 
     let pool = SqlitePoolOptions::new()
@@ -17,12 +21,15 @@ pub async fn init_db(db_path: PathBuf) -> Result<SqlitePool, String> {
         .await
         .map_err(|e| format!("DB connect failed: {e}"))?;
 
+    // foreign keys
     sqlx::query("PRAGMA foreign_keys = ON;")
         .execute(&pool)
         .await
         .map_err(|e| format!("PRAGMA failed: {e}"))?;
 
+  
     // USERS
+  
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS users (
@@ -41,16 +48,21 @@ pub async fn init_db(db_path: PathBuf) -> Result<SqlitePool, String> {
     .await
     .map_err(|e| format!("Create users failed: {e}"))?;
 
-    // Ako ti je baza već postojala prije, treba ALTER za nove kolone:
-    // SQLite nema IF NOT EXISTS za ADD COLUMN u svim verzijama, pa pokušamo “best effort”
-    let _ = sqlx::query(r#"ALTER TABLE users ADD COLUMN first_name TEXT NOT NULL DEFAULT '';"#)
-        .execute(&pool)
-        .await;
-    let _ = sqlx::query(r#"ALTER TABLE users ADD COLUMN last_name TEXT NOT NULL DEFAULT '';"#)
-        .execute(&pool)
-        .await;
+    // Best-effort ALTER (ako baza već postoji)
+    let _ = sqlx::query(
+        r#"ALTER TABLE users ADD COLUMN first_name TEXT NOT NULL DEFAULT '';"#,
+    )
+    .execute(&pool)
+    .await;
+
+    let _ = sqlx::query(
+        r#"ALTER TABLE users ADD COLUMN last_name TEXT NOT NULL DEFAULT '';"#,
+    )
+    .execute(&pool)
+    .await;
 
     // SESSIONS
+
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS sessions (
@@ -66,6 +78,24 @@ pub async fn init_db(db_path: PathBuf) -> Result<SqlitePool, String> {
     .execute(&pool)
     .await
     .map_err(|e| format!("Create sessions failed: {e}"))?;
+
+
+    // CARDS  
+ 
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS cards (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          category TEXT NOT NULL CHECK (category IN ('BONES','ORGANS')),
+          english TEXT NOT NULL,
+          latin TEXT NOT NULL,
+          image_path TEXT NOT NULL
+        );
+        "#,
+    )
+    .execute(&pool)
+    .await
+    .map_err(|e| format!("Create cards failed: {e}"))?;
 
     Ok(pool)
 }

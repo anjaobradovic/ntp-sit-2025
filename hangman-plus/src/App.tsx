@@ -1,52 +1,29 @@
-import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { useState } from "react";
 
 import LandingPage from "./pages/LandingPage";
-import NextPage from "./pages/NextPage";
+import HomePage from "./pages/HomePage";
 import LoginModal from "./components/LoginModal";
 import RegisterModal from "./components/RegisterModal";
 import Toast from "./components/Toast";
 
-type Screen = "landing" | "next";
-
+type Screen = "landing" | "home";
 const SESSION_KEY = "hangman_session_token";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
-
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
 
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
 
-  // restore session on app start
-  useEffect(() => {
-    const token = localStorage.getItem(SESSION_KEY);
-    if (!token) return;
-
-    (async () => {
-      try {
-        const ok = await invoke<boolean>("validate_session", { sessionToken: token });
-        if (ok) setScreen("next");
-        else localStorage.removeItem(SESSION_KEY);
-      } catch {
-        localStorage.removeItem(SESSION_KEY);
-      }
-    })();
-  }, []);
-
-  const showToast5s = (msg: string, after?: () => void) => {
+  const showToast = (msg: string, ms = 2500) => {
     setToastMsg(msg);
     setToastOpen(true);
-    setTimeout(() => {
-      setToastOpen(false);
-      after?.();
-    }, 5000);
+    setTimeout(() => setToastOpen(false), ms);
   };
 
   const openAuth = () => {
-    // default otvori login, a register je tab switch
     setLoginOpen(true);
     setRegisterOpen(false);
   };
@@ -54,19 +31,15 @@ export default function App() {
   const onLoginSuccess = (token: string) => {
     localStorage.setItem(SESSION_KEY, token);
     setLoginOpen(false);
-
-    showToast5s("Successfully logged in.", () => {
-      setScreen("next");
-    });
+    setScreen("home");
+    showToast("Uspješno ste se prijavili ✅");
   };
 
-  const onRegisterSuccess = () => {
+  const onRegisterSuccess = (token: string) => {
+    localStorage.setItem(SESSION_KEY, token);
     setRegisterOpen(false);
-
-    showToast5s("Successfully registered.", () => {
-      // nakon registracije otvori login
-      setLoginOpen(true);
-    });
+    setScreen("home");
+    showToast("Uspješno ste se registrovali ✅");
   };
 
   const switchToRegister = () => {
@@ -79,10 +52,16 @@ export default function App() {
     setLoginOpen(true);
   };
 
+  const onLogout = () => {
+    localStorage.removeItem(SESSION_KEY);
+    setScreen("landing");
+    showToast("Odjavljeni ste.");
+  };
+
   return (
     <div className="app-bg">
       {screen === "landing" && <LandingPage onOpenAuth={openAuth} />}
-      {screen === "next" && <NextPage />}
+      {screen === "home" && <HomePage onLogout={onLogout} />}
 
       <LoginModal
         open={loginOpen}
