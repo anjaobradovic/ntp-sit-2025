@@ -2,15 +2,27 @@ import { useState } from "react";
 
 import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
+import GamePage from "./pages/GamePage";
+
 import LoginModal from "./components/LoginModal";
 import RegisterModal from "./components/RegisterModal";
 import Toast from "./components/Toast";
 
-type Screen = "landing" | "home";
+type Screen = "landing" | "home" | "game"; 
+type GameSettings = {
+  category: "ORGANS" | "BONES";
+  language: "EN" | "LAT";
+  difficulty: "EASY" | "HARD";
+  maxWrong: number;
+};
+
 const SESSION_KEY = "hangman_session_token";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
+
+  const [gameSettings, setGameSettings] = useState<GameSettings | null>(null);
+
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
 
@@ -54,14 +66,32 @@ export default function App() {
 
   const onLogout = () => {
     localStorage.removeItem(SESSION_KEY);
+    setGameSettings(null);
     setScreen("landing");
     showToast("Odjavljeni ste.");
+  };
+
+  const onExitGame = () => {
+    setScreen("home");
   };
 
   return (
     <div className="app-bg">
       {screen === "landing" && <LandingPage onOpenAuth={openAuth} />}
-      {screen === "home" && <HomePage onLogout={onLogout} />}
+
+      {screen === "home" && (
+        <HomePage
+          onLogout={onLogout}
+          onPlay={(s: GameSettings) => {
+            setGameSettings(s);
+            setScreen("game");
+          }}
+        />
+      )}
+
+      {screen === "game" && gameSettings && (
+        <GamePage settings={gameSettings} onExit={onExitGame} />
+      )}
 
       <LoginModal
         open={loginOpen}

@@ -24,10 +24,12 @@ pub fn run() {
                 let pool = db::init_db(db_path).await?;
                 app_handle.manage(pool);
 
+                // Game state
+                app_handle.manage(commands::game_commands::GamesState::default());
+
                 Ok::<(), String>(())
             })
             .map_err(|e| tauri::Error::Setup(Box::<dyn std::error::Error>::from(e).into()))?;
-
 
             Ok(())
         })
@@ -36,6 +38,10 @@ pub fn run() {
             commands::auth_commands::login_user,
             commands::auth_commands::validate_session,
             commands::auth_commands::logout,
+            commands::game_commands::start_game,
+            commands::game_commands::next_card,
+            commands::game_commands::reset_game,
+            commands::game_commands::end_game,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
