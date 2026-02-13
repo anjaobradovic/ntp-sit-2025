@@ -3,13 +3,19 @@ import "../styles/homepage.css";
 
 type Props = {
   onLogout?: () => void;
+  onPlay?: (s: {
+    category: "ORGANS" | "BONES";
+    language: "EN" | "LAT";
+    difficulty: "EASY" | "HARD";
+    maxWrong: number;
+  }) => void;
 };
 
 type Category = "ORGANS" | "BONES" | "";
 type Language = "EN" | "LAT" | "";
 type Difficulty = "EASY" | "HARD" | "";
 
-export default function HomePage({ onLogout }: Props) {
+export default function HomePage({ onLogout, onPlay }: Props) {
   const [category, setCategory] = useState<Category>("");
   const [language, setLanguage] = useState<Language>("");
   const [difficulty, setDifficulty] = useState<Difficulty>("");
@@ -25,12 +31,12 @@ export default function HomePage({ onLogout }: Props) {
   );
 
   const handlePlay = () => {
-    if (!canPlay) return;
+    if (!canPlay || !onPlay) return;
 
-    console.log("PLAY:", {
-      category,
-      language,
-      difficulty,
+    onPlay({
+      category: category as "ORGANS" | "BONES",
+      language: language as "EN" | "LAT",
+      difficulty: difficulty as "EASY" | "HARD",
       maxWrong,
     });
   };
@@ -132,7 +138,7 @@ export default function HomePage({ onLogout }: Props) {
             />
             <ChoiceCard
               title="Hard"
-              desc="3 mistakes: head, body, arms together + legs together"
+              desc="3 mistakes: head, body, arms+legs together"
               icon="😈"
               selected={difficulty === "HARD"}
               onClick={() => setDifficulty("HARD")}

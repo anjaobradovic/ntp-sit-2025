@@ -1,7 +1,8 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
 use crate::domain::category::Category;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Card {
     pub id: i64,
     pub category: Category,

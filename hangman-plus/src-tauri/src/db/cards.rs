@@ -1,40 +1,41 @@
 use sqlx::{Row, SqlitePool};
 
-use crate::domain::card::Card;
-use crate::domain::category::Category;
+use crate::domain::{card::Card, category::Category};
 
-pub async fn get_random_card(pool: &SqlitePool, category: Category) -> Result<Card, String> {
-    let row = sqlx::query(
+pub async fn get_cards_by_category(
+    pool: &SqlitePool,
+    category: Category,
+) -> Result<Vec<Card>, String> {
+    let rows = sqlx::query(
         r#"
         SELECT id, category, english, latin, image_path
         FROM cards
         WHERE category = ?
-        ORDER BY RANDOM()
-        LIMIT 1
         "#,
     )
     .bind(category.as_str())
-    .fetch_one(pool)
+    .fetch_all(pool)
     .await
-    .map_err(|e| format!("get_random_card failed: {e}"))?;
+    .map_err(|e| format!("Fetch cards failed: {e}"))?;
 
-    let id: i64 = row.try_get("id").map_err(|e| e.to_string())?;
-    let cat_str: String = row.try_get("category").map_err(|e| e.to_string())?;
-    let english: String = row.try_get("english").map_err(|e| e.to_string())?;
-    let latin: String = row.try_get("latin").map_err(|e| e.to_string())?;
-    let image_path: String = row.try_get("image_path").map_err(|e| e.to_string())?;
+    let mut cards = Vec::with_capacity(rows.len());
 
-    let cat = match cat_str.as_str() {
-        "BONES" => Category::Bones,
-        "ORGANS" => Category::Organs,
-        other => return Err(format!("Unknown category in DB: {other}")),
-    };
+    for r in rows {
+        let cat_str: String = r.get("category");
+        let cat = match cat_str.as_str() {
+            "BONES" => Category::Bones,
+            "ORGANS" => Category::Organs,
+            other => return Err(format!("Unknown category in DB: {other}")),
+        };
 
-    Ok(Card {
-        id,
-        category: cat,
-        english,
-        latin,
-        image_path,
-    })
+        cards.push(Card {
+            id: r.get::<i64, _>("id"),
+            category: cat,
+            english: r.get::<String, _>("english"),
+            latin: r.get::<String, _>("latin"),
+            image_path: r.get::<String, _>("image_path"),
+        });
+    }
+
+    Ok(cards)
 }
