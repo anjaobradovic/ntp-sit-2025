@@ -11,6 +11,7 @@ pub async fn get_cards_by_category(
         SELECT id, category, english, latin, image_path
         FROM cards
         WHERE category = ?
+          AND status = 'APPROVED'
         "#,
     )
     .bind(category.as_str())
@@ -22,6 +23,7 @@ pub async fn get_cards_by_category(
 
     for r in rows {
         let cat_str: String = r.get("category");
+
         let cat = match cat_str.as_str() {
             "BONES" => Category::Bones,
             "ORGANS" => Category::Organs,

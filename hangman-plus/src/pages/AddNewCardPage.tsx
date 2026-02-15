@@ -1,14 +1,18 @@
 import { useMemo, useState } from "react";
 import { safeInvoke } from "../lib/invoke";
+import "../styles/homepage.css";
 
 type Props = {
   sessionToken: string;
+  mode: "ADMIN" | "USER";
   onBack: () => void;
 };
 
 type Category = "ORGANS" | "BONES";
 
-export default function AddNewCardPage({ sessionToken, onBack }: Props) {
+export default function AddNewCardPage({ sessionToken, mode, onBack }: Props) {
+  const isAdmin = mode === "ADMIN";
+
   const [category, setCategory] = useState<Category>("BONES");
   const [english, setEnglish] = useState("");
   const [latin, setLatin] = useState("");
@@ -20,18 +24,25 @@ export default function AddNewCardPage({ sessionToken, onBack }: Props) {
     return (
       english.trim().length > 0 &&
       latin.trim().length > 0 &&
-      imagePath.trim().length > 0 &&
-      (category === "BONES" || category === "ORGANS")
+      imagePath.trim().length > 0
     );
-  }, [english, latin, imagePath, category]);
+  }, [english, latin, imagePath]);
 
   const submit = async () => {
-    if (!canSubmit || loading) return;
+    if (loading) return;
+
+    if (!canSubmit) {
+      setMsg("❌ Please fill in all fields before submitting.");
+      return;
+    }
+
     setMsg("");
     setLoading(true);
 
     try {
-      const res = await safeInvoke<{ id: number; status: string }>("admin_add_card", {
+      const command = isAdmin ? "admin_add_card" : "user_request_card";
+
+      const res = await safeInvoke<{ id: number; status: string }>(command, {
         input: {
           sessionToken,
           category,
@@ -41,7 +52,12 @@ export default function AddNewCardPage({ sessionToken, onBack }: Props) {
         },
       });
 
-      setMsg(`✅ Added! id=${res.id}, status=${res.status}`);
+      if (isAdmin) {
+        setMsg(`✅ Card successfully saved! (Status: ${res.status})`);
+      } else {
+        setMsg("✅ Request successfully sent! An admin will review it.");
+      }
+
       setEnglish("");
       setLatin("");
       setImagePath(category === "BONES" ? "/cards/bones/" : "/cards/organs/");
@@ -52,22 +68,30 @@ export default function AddNewCardPage({ sessionToken, onBack }: Props) {
     }
   };
 
+  const title = isAdmin ? "Add New Card" : "Grow Together";
+  const subtitle = isAdmin
+    ? "Admin mode • The card will be instantly approved."
+    : "User mode • Send a request for admin approval.";
+
+  const buttonText = isAdmin ? "Save Card" : "Send Request";
+
   return (
     <div className="hp-page">
       <div className="hp-card">
         <div className="hp-topbar">
           <div>
-            <h1 className="hp-title">Add new card</h1>
-            <p className="hp-subtitle">Admin only • saves card into DB (imagePath for now).</p>
+            <h1 className="hp-title">{title}</h1>
+            <p className="hp-subtitle">{subtitle}</p>
           </div>
 
-          <div style={{ display: "flex", gap: 10 }}>
+          <div className="hp-actions">
             <button className="hp-ghost" type="button" onClick={onBack}>
               ← Back
             </button>
           </div>
         </div>
 
+        {/* CATEGORY */}
         <section className="hp-section">
           <div className="hp-section-header">
             <span className="hp-section-title">Category</span>
@@ -95,6 +119,7 @@ export default function AddNewCardPage({ sessionToken, onBack }: Props) {
           </div>
         </section>
 
+        {/* NAMES */}
         <section className="hp-section">
           <div className="hp-section-header">
             <span className="hp-section-title">Names</span>
@@ -102,7 +127,9 @@ export default function AddNewCardPage({ sessionToken, onBack }: Props) {
 
           <div style={{ display: "grid", gap: 12 }}>
             <div>
-              <label style={{ display: "block", marginBottom: 6, opacity: 0.85 }}>English</label>
+              <label style={{ display: "block", marginBottom: 6, opacity: 0.85 }}>
+                English Name
+              </label>
               <input
                 className="hp-input"
                 value={english}
@@ -112,7 +139,9 @@ export default function AddNewCardPage({ sessionToken, onBack }: Props) {
             </div>
 
             <div>
-              <label style={{ display: "block", marginBottom: 6, opacity: 0.85 }}>Latin</label>
+              <label style={{ display: "block", marginBottom: 6, opacity: 0.85 }}>
+                Latin Name
+              </label>
               <input
                 className="hp-input"
                 value={latin}
@@ -123,9 +152,10 @@ export default function AddNewCardPage({ sessionToken, onBack }: Props) {
           </div>
         </section>
 
+        {/* IMAGE */}
         <section className="hp-section">
           <div className="hp-section-header">
-            <span className="hp-section-title">Image path</span>
+            <span className="hp-section-title">Image Path</span>
           </div>
 
           <input
@@ -136,20 +166,24 @@ export default function AddNewCardPage({ sessionToken, onBack }: Props) {
           />
 
           <div className="hp-hint" style={{ marginTop: 8 }}>
-            For now we store just a path. Later we’ll add real upload into app data dir.
+            Currently we store only the image path. File upload can be added later.
           </div>
         </section>
 
         <button
-          className={`hp-play ${!canSubmit || loading ? "disabled" : ""}`}
+          className={`hp-play ${(!canSubmit || loading) ? "disabled" : ""}`}
           onClick={submit}
           disabled={!canSubmit || loading}
           type="button"
         >
-          {loading ? "Saving..." : "Save card"}
+          {loading ? "Processing..." : buttonText}
         </button>
 
-        {msg && <div className="hp-hint" style={{ marginTop: 10 }}>{msg}</div>}
+        {msg && (
+          <div className="hp-hint" style={{ marginTop: 10 }}>
+            {msg}
+          </div>
+        )}
       </div>
     </div>
   );

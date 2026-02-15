@@ -13,12 +13,7 @@ import Toast from "./components/Toast";
 
 import type { MeResponse, Role } from "./types/auth";
 
-type Screen =
-  | "landing"
-  | "home"
-  | "game"
-  | "add_card"
-  | "card_requests";
+type Screen = "landing" | "home" | "game" | "add_card" | "card_requests";
 
 type GameSettings = {
   category: "ORGANS" | "BONES";
@@ -31,8 +26,7 @@ const SESSION_KEY = "hangman_session_token";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
-  const [gameSettings, setGameSettings] =
-    useState<GameSettings | null>(null);
+  const [gameSettings, setGameSettings] = useState<GameSettings | null>(null);
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -40,8 +34,7 @@ export default function App() {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
 
-  const [sessionToken, setSessionToken] =
-    useState<string | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [username, setUsername] = useState<string | null>(null);
 
@@ -57,10 +50,7 @@ export default function App() {
   };
 
   const loadMe = async (token: string) => {
-    const me = await safeInvoke<MeResponse>("get_me", {
-      sessionToken: token,
-    });
-
+    const me = await safeInvoke<MeResponse>("get_me", { sessionToken: token });
     setRole(me.role);
     setUsername(me.username);
   };
@@ -91,14 +81,14 @@ export default function App() {
     try {
       await loadMe(token);
       setScreen("home");
-      showToast("Uspješno ste se prijavili ✅");
+      showToast("Logged in successfully ✅");
     } catch (e: any) {
       localStorage.removeItem(SESSION_KEY);
       setSessionToken(null);
       setRole(null);
       setUsername(null);
       setScreen("landing");
-      showToast(e?.message ?? "Neuspješno učitavanje profila.");
+      showToast(e?.message ?? "Failed to load profile.");
     }
   };
 
@@ -110,14 +100,14 @@ export default function App() {
     try {
       await loadMe(token);
       setScreen("home");
-      showToast("Uspješno ste se registrovali ✅");
+      showToast("Registered successfully ✅");
     } catch (e: any) {
       localStorage.removeItem(SESSION_KEY);
       setSessionToken(null);
       setRole(null);
       setUsername(null);
       setScreen("landing");
-      showToast(e?.message ?? "Neuspješno učitavanje profila.");
+      showToast(e?.message ?? "Failed to load profile.");
     }
   };
 
@@ -132,14 +122,11 @@ export default function App() {
   };
 
   const onLogout = async () => {
-    const token =
-      sessionToken ?? localStorage.getItem(SESSION_KEY);
+    const token = sessionToken ?? localStorage.getItem(SESSION_KEY);
 
     if (token) {
       try {
-        await safeInvoke<void>("logout", {
-          sessionToken: token,
-        });
+        await safeInvoke<void>("logout", { sessionToken: token });
       } catch {
         // ignore
       }
@@ -152,16 +139,14 @@ export default function App() {
 
     setGameSettings(null);
     setScreen("landing");
-    showToast("Odjavljeni ste.");
+    showToast("Logged out.");
   };
 
   const onExitGame = () => setScreen("home");
 
   return (
     <div className="app-bg">
-      {screen === "landing" && (
-        <LandingPage onOpenAuth={openAuth} />
-      )}
+      {screen === "landing" && <LandingPage onOpenAuth={openAuth} />}
 
       {screen === "home" && (
         <HomePage
@@ -170,7 +155,7 @@ export default function App() {
           onAddNewCard={() => setScreen("add_card")}
           onCardRequests={() => setScreen("card_requests")}
           onUsers={() => console.log("users")}
-          onGrowTogether={() => console.log("grow together")}
+          onGrowTogether={() => setScreen("add_card")}
           onStats={() => console.log("stats")}
           onPlay={(s: GameSettings) => {
             setGameSettings(s);
@@ -182,22 +167,17 @@ export default function App() {
       {screen === "add_card" && sessionToken && (
         <AddNewCardPage
           sessionToken={sessionToken}
+          mode={(role ?? "USER") as "ADMIN" | "USER"}
           onBack={() => setScreen("home")}
         />
       )}
 
       {screen === "card_requests" && sessionToken && (
-        <CardRequestsPage
-          sessionToken={sessionToken}
-          onBack={() => setScreen("home")}
-        />
+        <CardRequestsPage sessionToken={sessionToken} onBack={() => setScreen("home")} />
       )}
 
       {screen === "game" && gameSettings && (
-        <GamePage
-          settings={gameSettings}
-          onExit={onExitGame}
-        />
+        <GamePage settings={gameSettings} onExit={onExitGame} />
       )}
 
       <LoginModal
