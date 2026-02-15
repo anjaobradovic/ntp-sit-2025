@@ -121,4 +121,37 @@ impl CardService {
 
         Ok(())
     }
+
+    pub async fn list_pending_cards(
+    pool: &SqlitePool,
+    sessionToken: String,
+) -> Result<Vec<crate::domain::dto::PendingCard>, String> {
+    let (_user_id, role) = AuthService::require_session_user(pool, &sessionToken).await?;
+    if role != "ADMIN" {
+        return Err("Forbidden: admin only.".into());
+    }
+
+    let rows = sqlx::query_as::<_, crate::domain::dto::PendingCard>(
+        r#"
+        SELECT
+            id,
+            category,
+            english,
+            latin,
+            image_path,
+            status,
+            created_by,
+            created_at
+        FROM cards
+        WHERE status = 'PENDING'
+        ORDER BY created_at DESC
+        "#,
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("DB error: {e}"))?;
+
+    Ok(rows)
+}
+
 }

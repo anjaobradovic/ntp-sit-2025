@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 #[derive(Serialize)]
 pub struct LoginResponse {
@@ -25,4 +26,16 @@ pub struct CreateCardInput {
 pub struct CardResponse {
     pub id: i64,
     pub status: String,
+}
+
+#[derive(Serialize, FromRow)]
+pub struct PendingCard {
+    pub id: i64,
+    pub category: String,
+    pub english: String,
+    pub latin: String,
+    pub image_path: String,
+    pub status: String,
+    pub created_by: i64,
+    pub created_at: i64,
 }

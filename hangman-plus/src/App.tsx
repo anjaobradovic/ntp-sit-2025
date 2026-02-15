@@ -5,6 +5,7 @@ import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
 import GamePage from "./pages/GamePage";
 import AddNewCardPage from "./pages/AddNewCardPage";
+import CardRequestsPage from "./pages/CardRequestsPage";
 
 import LoginModal from "./components/LoginModal";
 import RegisterModal from "./components/RegisterModal";
@@ -12,7 +13,12 @@ import Toast from "./components/Toast";
 
 import type { MeResponse, Role } from "./types/auth";
 
-type Screen = "landing" | "home" | "game" | "add_card";
+type Screen =
+  | "landing"
+  | "home"
+  | "game"
+  | "add_card"
+  | "card_requests";
 
 type GameSettings = {
   category: "ORGANS" | "BONES";
@@ -25,7 +31,8 @@ const SESSION_KEY = "hangman_session_token";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
-  const [gameSettings, setGameSettings] = useState<GameSettings | null>(null);
+  const [gameSettings, setGameSettings] =
+    useState<GameSettings | null>(null);
 
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -33,7 +40,8 @@ export default function App() {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
 
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [sessionToken, setSessionToken] =
+    useState<string | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [username, setUsername] = useState<string | null>(null);
 
@@ -49,7 +57,10 @@ export default function App() {
   };
 
   const loadMe = async (token: string) => {
-    const me = await safeInvoke<MeResponse>("get_me", { sessionToken: token });
+    const me = await safeInvoke<MeResponse>("get_me", {
+      sessionToken: token,
+    });
+
     setRole(me.role);
     setUsername(me.username);
   };
@@ -121,10 +132,14 @@ export default function App() {
   };
 
   const onLogout = async () => {
-    const token = sessionToken ?? localStorage.getItem(SESSION_KEY);
+    const token =
+      sessionToken ?? localStorage.getItem(SESSION_KEY);
+
     if (token) {
       try {
-        await safeInvoke<void>("logout", { sessionToken: token });
+        await safeInvoke<void>("logout", {
+          sessionToken: token,
+        });
       } catch {
         // ignore
       }
@@ -144,14 +159,16 @@ export default function App() {
 
   return (
     <div className="app-bg">
-      {screen === "landing" && <LandingPage onOpenAuth={openAuth} />}
+      {screen === "landing" && (
+        <LandingPage onOpenAuth={openAuth} />
+      )}
 
       {screen === "home" && (
         <HomePage
           role={role ?? undefined}
           onLogout={onLogout}
           onAddNewCard={() => setScreen("add_card")}
-          onCardRequests={() => console.log("card requests")}
+          onCardRequests={() => setScreen("card_requests")}
           onUsers={() => console.log("users")}
           onGrowTogether={() => console.log("grow together")}
           onStats={() => console.log("stats")}
@@ -169,8 +186,18 @@ export default function App() {
         />
       )}
 
+      {screen === "card_requests" && sessionToken && (
+        <CardRequestsPage
+          sessionToken={sessionToken}
+          onBack={() => setScreen("home")}
+        />
+      )}
+
       {screen === "game" && gameSettings && (
-        <GamePage settings={gameSettings} onExit={onExitGame} />
+        <GamePage
+          settings={gameSettings}
+          onExit={onExitGame}
+        />
       )}
 
       <LoginModal

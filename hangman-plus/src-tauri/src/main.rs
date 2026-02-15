@@ -47,6 +47,8 @@ pub fn run() {
             commands::card_commands::user_request_card,
             commands::card_commands::approve_card,
             commands::card_commands::reject_card,
+            commands::card_commands::list_pending_cards,
+
 
                
         ])

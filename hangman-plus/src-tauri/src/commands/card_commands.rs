@@ -3,6 +3,8 @@ use tauri::State;
 
 use crate::domain::dto::{CardResponse, CreateCardInput};
 use crate::services::card_service::CardService;
+use crate::domain::dto::PendingCard;
+
 
 #[tauri::command]
 pub async fn admin_add_card(
@@ -36,4 +38,13 @@ pub async fn reject_card(
     card_id: i64,
 ) -> Result<(), String> {
     CardService::reject_card(&pool, session_token, card_id).await
+}
+
+
+#[tauri::command]
+pub async fn list_pending_cards(
+    pool: State<'_, SqlitePool>,
+    sessionToken: String,
+) -> Result<Vec<PendingCard>, String> {
+    CardService::list_pending_cards(&pool, sessionToken).await
 }
