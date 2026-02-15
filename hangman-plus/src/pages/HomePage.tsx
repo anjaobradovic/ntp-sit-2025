@@ -1,8 +1,22 @@
 import { useMemo, useState } from "react";
 import "../styles/homepage.css";
 
+type Role = "ADMIN" | "USER";
+
 type Props = {
+  role?: Role;
+
   onLogout?: () => void;
+
+  // ADMIN actions
+  onAddNewCard?: () => void;
+  onCardRequests?: () => void;
+  onUsers?: () => void;
+
+  // USER actions
+  onGrowTogether?: () => void;
+  onStats?: () => void;
+
   onPlay?: (s: {
     category: "ORGANS" | "BONES";
     language: "EN" | "LAT";
@@ -15,7 +29,16 @@ type Category = "ORGANS" | "BONES" | "";
 type Language = "EN" | "LAT" | "";
 type Difficulty = "EASY" | "HARD" | "";
 
-export default function HomePage({ onLogout, onPlay }: Props) {
+export default function HomePage({
+  role,
+  onLogout,
+  onAddNewCard,
+  onCardRequests,
+  onUsers,
+  onGrowTogether,
+  onStats,
+  onPlay,
+}: Props) {
   const [category, setCategory] = useState<Category>("");
   const [language, setLanguage] = useState<Language>("");
   const [difficulty, setDifficulty] = useState<Difficulty>("");
@@ -52,11 +75,61 @@ export default function HomePage({ onLogout, onPlay }: Props) {
             </p>
           </div>
 
-          {onLogout && (
-            <button className="hp-ghost" onClick={onLogout} type="button">
-              Log out
-            </button>
-          )}
+          <div className="hp-actions">
+            {role === "ADMIN" && (
+              <>
+                <button
+                  className="hp-ghost"
+                  onClick={onAddNewCard}
+                  type="button"
+                >
+                  Add new card
+                </button>
+
+                <button
+                  className="hp-ghost"
+                  onClick={onCardRequests}
+                  type="button"
+                >
+                  Card requests
+                </button>
+
+                <button
+                  className="hp-ghost"
+                  onClick={onUsers}
+                  type="button"
+                >
+                  Users
+                </button>
+              </>
+            )}
+
+            {role === "USER" && (
+              <>
+                <button
+                  className="hp-ghost"
+                  onClick={onGrowTogether}
+                  type="button"
+                >
+                  Grow together
+                </button>
+
+                <button
+                  className="hp-ghost"
+                  onClick={onStats}
+                  type="button"
+                >
+                  Stats
+                </button>
+              </>
+            )}
+
+            {onLogout && (
+              <button className="hp-ghost" onClick={onLogout} type="button">
+                Log out
+              </button>
+            )}
+          </div>
         </div>
 
         {/* CATEGORY */}
@@ -173,7 +246,13 @@ type ChoiceCardProps = {
   onClick: () => void;
 };
 
-function ChoiceCard({ title, desc, icon, selected, onClick }: ChoiceCardProps) {
+function ChoiceCard({
+  title,
+  desc,
+  icon,
+  selected,
+  onClick,
+}: ChoiceCardProps) {
   return (
     <button
       className={`hp-choice ${selected ? "selected" : ""}`}

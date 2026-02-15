@@ -24,7 +24,7 @@ pub fn run() {
                 let pool = db::init_db(db_path).await?;
                 app_handle.manage(pool);
 
-                // Game state
+              
                 app_handle.manage(commands::game_commands::GamesState::default());
 
                 Ok::<(), String>(())
@@ -42,6 +42,8 @@ pub fn run() {
             commands::game_commands::next_card,
             commands::game_commands::reset_game,
             commands::game_commands::end_game,
+            commands::auth_commands::get_me,
+               
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

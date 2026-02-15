@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { safeInvoke } from "./lib/invoke";
 
 import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
@@ -8,7 +9,9 @@ import LoginModal from "./components/LoginModal";
 import RegisterModal from "./components/RegisterModal";
 import Toast from "./components/Toast";
 
-type Screen = "landing" | "home" | "game"; 
+import type { MeResponse, Role } from "./types/auth";
+
+type Screen = "landing" | "home" | "game";
 type GameSettings = {
   category: "ORGANS" | "BONES";
   language: "EN" | "LAT";
@@ -20,7 +23,6 @@ const SESSION_KEY = "hangman_session_token";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
-
   const [gameSettings, setGameSettings] = useState<GameSettings | null>(null);
 
   const [loginOpen, setLoginOpen] = useState(false);
@@ -28,6 +30,11 @@ export default function App() {
 
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
+
+  
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [role, setRole] = useState<Role | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
 
   const showToast = (msg: string, ms = 2500) => {
     setToastMsg(msg);
@@ -40,18 +47,70 @@ export default function App() {
     setRegisterOpen(false);
   };
 
-  const onLoginSuccess = (token: string) => {
-    localStorage.setItem(SESSION_KEY, token);
-    setLoginOpen(false);
-    setScreen("home");
-    showToast("Uspješno ste se prijavili ✅");
+  // učitaj "me" iz tokena
+  const loadMe = async (token: string) => {
+    const me = await safeInvoke<MeResponse>("get_me", { sessionToken: token });
+
+    setRole(me.role);
+    setUsername(me.username);
   };
 
-  const onRegisterSuccess = (token: string) => {
+  useEffect(() => {
+    const t = localStorage.getItem(SESSION_KEY);
+    if (!t) return;
+
+    setSessionToken(t);
+
+    loadMe(t)
+      .then(() => setScreen("home"))
+      .catch(() => {
+        // token ne važi više
+        localStorage.removeItem(SESSION_KEY);
+        setSessionToken(null);
+        setRole(null);
+        setUsername(null);
+        setScreen("landing");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onLoginSuccess = async (token: string) => {
     localStorage.setItem(SESSION_KEY, token);
+    setSessionToken(token);
+    setLoginOpen(false);
+
+    try {
+      await loadMe(token);
+      setScreen("home");
+      showToast("Uspješno ste se prijavili ✅");
+    } catch (e: any) {
+      // ako get_me failuje, tretiramo kao da login nije validan
+      localStorage.removeItem(SESSION_KEY);
+      setSessionToken(null);
+      setRole(null);
+      setUsername(null);
+      setScreen("landing");
+      showToast(e?.message ?? "Neuspješno učitavanje profila.");
+    }
+  };
+
+  const onRegisterSuccess = async (token: string) => {
+    localStorage.setItem(SESSION_KEY, token);
+    setSessionToken(token);
     setRegisterOpen(false);
-    setScreen("home");
-    showToast("Uspješno ste se registrovali ✅");
+
+    try {
+      await loadMe(token);
+      setScreen("home");
+      showToast("Uspješno ste se registrovali ✅");
+    } catch (e: any) {
+      localStorage.removeItem(SESSION_KEY);
+      setSessionToken(null);
+      setRole(null);
+      setUsername(null);
+      setScreen("landing");
+      showToast(e?.message ?? "Neuspješno učitavanje profila.");
+    }
   };
 
   const switchToRegister = () => {
@@ -64,16 +123,28 @@ export default function App() {
     setLoginOpen(true);
   };
 
-  const onLogout = () => {
+  const onLogout = async () => {
+    const token = sessionToken ?? localStorage.getItem(SESSION_KEY);
+    if (token) {
+      try {
+        await safeInvoke<void>("logout", { sessionToken: token });
+
+      } catch {
+  
+      }
+    }
+
     localStorage.removeItem(SESSION_KEY);
+    setSessionToken(null);
+    setRole(null);
+    setUsername(null);
+
     setGameSettings(null);
     setScreen("landing");
     showToast("Odjavljeni ste.");
   };
 
-  const onExitGame = () => {
-    setScreen("home");
-  };
+  const onExitGame = () => setScreen("home");
 
   return (
     <div className="app-bg">
@@ -81,7 +152,13 @@ export default function App() {
 
       {screen === "home" && (
         <HomePage
+          role={role ?? undefined}
           onLogout={onLogout}
+          onAddNewCard={() => console.log("add new card")}
+          onCardRequests={() => console.log("card requests")}
+          onUsers={() => console.log("users")}
+          onGrowTogether={() => console.log("grow together")}
+          onStats={() => console.log("stats")}
           onPlay={(s: GameSettings) => {
             setGameSettings(s);
             setScreen("game");

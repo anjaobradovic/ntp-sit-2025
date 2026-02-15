@@ -46,6 +46,14 @@ struct UserLoginRow {
     pub password_hash: String,
 }
 
+#[derive(sqlx::FromRow, Debug)]
+struct MeRow {
+    pub id: i64,
+    pub username: String,
+    pub role: String,
+}
+
+
 impl AuthService {
     pub async fn register_user(
         pool: &SqlitePool,
@@ -179,4 +187,38 @@ impl AuthService {
 
         Ok(())
     }
+    
+    pub async fn get_me(pool: &SqlitePool, session_token: String) -> Result<crate::domain::dto::MeResponse, String> {
+    if session_token.trim().is_empty() {
+        return Err("Missing session token.".into());
+    }
+
+    let token_hash = hash_token(session_token.trim());
+
+    let row = sqlx::query_as::<_, MeRow>(
+        r#"
+        SELECT u.id as "id", u.username as "username", u.role as "role"
+        FROM sessions s
+        JOIN users u ON u.id = s.user_id
+        WHERE s.token_hash = ?1 AND s.revoked_at IS NULL
+        ORDER BY s.created_at DESC
+        LIMIT 1
+        "#
+    )
+    .bind(token_hash)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("DB error: {e}"))?;
+
+    match row {
+        Some(r) => Ok(crate::domain::dto::MeResponse {
+            id: r.id,
+            username: r.username,
+            role: r.role,
+        }),
+        None => Err("Invalid session.".into()),
+    }
+}
+
+    
 }

@@ -3,6 +3,7 @@ use tauri::State;
 
 use crate::domain::dto::LoginResponse;
 use crate::services::auth_service::AuthService;
+use crate::domain::dto::MeResponse;
 
 #[tauri::command]
 pub async fn register_user(
@@ -39,4 +40,12 @@ pub async fn logout(
     session_token: String,
 ) -> Result<(), String> {
     AuthService::logout(&pool, session_token).await
+}
+
+#[tauri::command]
+pub async fn get_me(
+    pool: State<'_, SqlitePool>,
+    session_token: String,
+) -> Result<MeResponse, String> {
+    AuthService::get_me(&pool, session_token).await
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { safeInvoke } from "../lib/invoke";
 import "../styles/AuthModal.css";
+import type { LoginResponse } from "../types/auth";
 
 type Props = {
   open: boolean;
@@ -9,13 +10,18 @@ type Props = {
   onSwitchToRegister: () => void;
 };
 
-export default function LoginModal({ open, onClose, onSuccess, onSwitchToRegister }: Props) {
+export default function LoginModal({
+  open,
+  onClose,
+  onSuccess,
+  onSwitchToRegister,
+}: Props) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
-  if (!open) return null; 
+  if (!open) return null;
 
   const submit = async () => {
     if (loading) return;
@@ -23,7 +29,7 @@ export default function LoginModal({ open, onClose, onSuccess, onSwitchToRegiste
     setLoading(true);
 
     try {
-      const res = await safeInvoke<{ session_token: string }>("login_user", {
+      const res = await safeInvoke<LoginResponse>("login_user", {
         identifier,
         password,
       });
@@ -40,21 +46,32 @@ export default function LoginModal({ open, onClose, onSuccess, onSwitchToRegiste
       <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">Log in</h2>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="modal-close" onClick={onClose} type="button">
+            ✕
+          </button>
         </div>
 
         <div className="modal-body">
           <div className="field">
             <label className="label">Username or email</label>
-            <input className="input" value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
+            <input
+              className="input"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+            />
           </div>
 
           <div className="field">
             <label className="label">Password</label>
-            <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input
+              className="input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
 
-          <button className="btn-primary" onClick={submit} disabled={loading}>
+          <button className="btn-primary" onClick={submit} disabled={loading} type="button">
             {loading ? "Signing in..." : "Continue"}
           </button>
 
@@ -62,7 +79,9 @@ export default function LoginModal({ open, onClose, onSuccess, onSwitchToRegiste
 
           <div className="helper">
             No account?{" "}
-            <button onClick={onSwitchToRegister}>Register</button>
+            <button onClick={onSwitchToRegister} type="button">
+              Register
+            </button>
           </div>
         </div>
       </div>
