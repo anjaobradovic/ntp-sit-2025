@@ -48,3 +48,11 @@ pub async fn list_pending_cards(
 ) -> Result<Vec<PendingCard>, String> {
     CardService::list_pending_cards(&pool, sessionToken).await
 }
+
+#[tauri::command]
+pub async fn count_pending_cards(
+    pool: State<'_, SqlitePool>,
+    sessionToken: String,
+) -> Result<i64, String> {
+    CardService::count_pending_cards(&pool, sessionToken).await
+}

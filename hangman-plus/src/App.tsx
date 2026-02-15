@@ -38,6 +38,8 @@ export default function App() {
   const [role, setRole] = useState<Role | null>(null);
   const [username, setUsername] = useState<string | null>(null);
 
+  const [pendingCount, setPendingCount] = useState<number>(0);
+
   const showToast = (msg: string, ms = 2500) => {
     setToastMsg(msg);
     setToastOpen(true);
@@ -55,6 +57,15 @@ export default function App() {
     setUsername(me.username);
   };
 
+  const loadPendingCount = async (token: string) => {
+    try {
+      const cnt = await safeInvoke<number>("count_pending_cards", { sessionToken: token });
+      setPendingCount(cnt);
+    } catch {
+      setPendingCount(0); // non-admin will land here too (forbidden) -> keep 0
+    }
+  };
+
   useEffect(() => {
     const t = localStorage.getItem(SESSION_KEY);
     if (!t) return;
@@ -62,12 +73,16 @@ export default function App() {
     setSessionToken(t);
 
     loadMe(t)
-      .then(() => setScreen("home"))
+      .then(async () => {
+        await loadPendingCount(t);
+        setScreen("home");
+      })
       .catch(() => {
         localStorage.removeItem(SESSION_KEY);
         setSessionToken(null);
         setRole(null);
         setUsername(null);
+        setPendingCount(0);
         setScreen("landing");
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,6 +95,7 @@ export default function App() {
 
     try {
       await loadMe(token);
+      await loadPendingCount(token);
       setScreen("home");
       showToast("Logged in successfully ✅");
     } catch (e: any) {
@@ -87,6 +103,7 @@ export default function App() {
       setSessionToken(null);
       setRole(null);
       setUsername(null);
+      setPendingCount(0);
       setScreen("landing");
       showToast(e?.message ?? "Failed to load profile.");
     }
@@ -99,6 +116,7 @@ export default function App() {
 
     try {
       await loadMe(token);
+      await loadPendingCount(token);
       setScreen("home");
       showToast("Registered successfully ✅");
     } catch (e: any) {
@@ -106,6 +124,7 @@ export default function App() {
       setSessionToken(null);
       setRole(null);
       setUsername(null);
+      setPendingCount(0);
       setScreen("landing");
       showToast(e?.message ?? "Failed to load profile.");
     }
@@ -136,6 +155,7 @@ export default function App() {
     setSessionToken(null);
     setRole(null);
     setUsername(null);
+    setPendingCount(0);
 
     setGameSettings(null);
     setScreen("landing");
@@ -151,6 +171,7 @@ export default function App() {
       {screen === "home" && (
         <HomePage
           role={role ?? undefined}
+          pendingCount={pendingCount}
           onLogout={onLogout}
           onAddNewCard={() => setScreen("add_card")}
           onCardRequests={() => setScreen("card_requests")}
@@ -168,12 +189,21 @@ export default function App() {
         <AddNewCardPage
           sessionToken={sessionToken}
           mode={(role ?? "USER") as "ADMIN" | "USER"}
-          onBack={() => setScreen("home")}
+          onBack={async () => {
+            await loadPendingCount(sessionToken);
+            setScreen("home");
+          }}
         />
       )}
 
       {screen === "card_requests" && sessionToken && (
-        <CardRequestsPage sessionToken={sessionToken} onBack={() => setScreen("home")} />
+        <CardRequestsPage
+          sessionToken={sessionToken}
+          onBack={async () => {
+            await loadPendingCount(sessionToken);
+            setScreen("home");
+          }}
+        />
       )}
 
       {screen === "game" && gameSettings && (

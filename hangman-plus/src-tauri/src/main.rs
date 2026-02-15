@@ -48,6 +48,8 @@ pub fn run() {
             commands::card_commands::approve_card,
             commands::card_commands::reject_card,
             commands::card_commands::list_pending_cards,
+            commands::card_commands::count_pending_cards,
+
 
 
                

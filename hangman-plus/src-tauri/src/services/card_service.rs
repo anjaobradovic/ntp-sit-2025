@@ -154,4 +154,24 @@ impl CardService {
     Ok(rows)
 }
 
+pub async fn count_pending_cards(
+    pool: &SqlitePool,
+    sessionToken: String,
+) -> Result<i64, String> {
+    let (_user_id, role) = AuthService::require_session_user(pool, &sessionToken).await?;
+    if role != "ADMIN" {
+        return Err("Forbidden: admin only.".into());
+    }
+
+    let cnt = sqlx::query_scalar::<_, i64>(
+        r#"SELECT COUNT(*) FROM cards WHERE status = 'PENDING'"#,
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| format!("DB error: {e}"))?;
+
+    Ok(cnt)
+}
+
+
 }

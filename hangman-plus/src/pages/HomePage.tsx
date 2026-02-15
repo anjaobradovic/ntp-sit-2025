@@ -5,6 +5,7 @@ type Role = "ADMIN" | "USER";
 
 type Props = {
   role?: Role;
+  pendingCount?: number;
 
   onLogout?: () => void;
 
@@ -31,6 +32,7 @@ type Difficulty = "EASY" | "HARD" | "";
 
 export default function HomePage({
   role,
+  pendingCount,
   onLogout,
   onAddNewCard,
   onCardRequests,
@@ -64,6 +66,9 @@ export default function HomePage({
     });
   };
 
+  const pendingLabel =
+    pendingCount && pendingCount > 0 ? ` (${pendingCount})` : "";
+
   return (
     <div className="hp-page">
       <div className="hp-card">
@@ -83,7 +88,7 @@ export default function HomePage({
                 </button>
 
                 <button className="hp-ghost" onClick={onCardRequests} type="button">
-                  Card requests
+                  Card requests{pendingLabel}
                 </button>
 
                 <button className="hp-ghost" onClick={onUsers} type="button">
