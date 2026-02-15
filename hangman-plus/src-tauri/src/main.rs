@@ -43,6 +43,11 @@ pub fn run() {
             commands::game_commands::reset_game,
             commands::game_commands::end_game,
             commands::auth_commands::get_me,
+            commands::card_commands::admin_add_card,
+            commands::card_commands::user_request_card,
+            commands::card_commands::approve_card,
+            commands::card_commands::reject_card,
+
                
         ])
         .run(tauri::generate_context!())

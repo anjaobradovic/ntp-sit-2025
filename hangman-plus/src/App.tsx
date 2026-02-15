@@ -4,6 +4,7 @@ import { safeInvoke } from "./lib/invoke";
 import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
 import GamePage from "./pages/GamePage";
+import AddNewCardPage from "./pages/AddNewCardPage";
 
 import LoginModal from "./components/LoginModal";
 import RegisterModal from "./components/RegisterModal";
@@ -11,7 +12,8 @@ import Toast from "./components/Toast";
 
 import type { MeResponse, Role } from "./types/auth";
 
-type Screen = "landing" | "home" | "game";
+type Screen = "landing" | "home" | "game" | "add_card";
+
 type GameSettings = {
   category: "ORGANS" | "BONES";
   language: "EN" | "LAT";
@@ -31,7 +33,6 @@ export default function App() {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
 
-  
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [username, setUsername] = useState<string | null>(null);
@@ -47,10 +48,8 @@ export default function App() {
     setRegisterOpen(false);
   };
 
-  // učitaj "me" iz tokena
   const loadMe = async (token: string) => {
     const me = await safeInvoke<MeResponse>("get_me", { sessionToken: token });
-
     setRole(me.role);
     setUsername(me.username);
   };
@@ -64,7 +63,6 @@ export default function App() {
     loadMe(t)
       .then(() => setScreen("home"))
       .catch(() => {
-        // token ne važi više
         localStorage.removeItem(SESSION_KEY);
         setSessionToken(null);
         setRole(null);
@@ -84,7 +82,6 @@ export default function App() {
       setScreen("home");
       showToast("Uspješno ste se prijavili ✅");
     } catch (e: any) {
-      // ako get_me failuje, tretiramo kao da login nije validan
       localStorage.removeItem(SESSION_KEY);
       setSessionToken(null);
       setRole(null);
@@ -128,9 +125,8 @@ export default function App() {
     if (token) {
       try {
         await safeInvoke<void>("logout", { sessionToken: token });
-
       } catch {
-  
+        // ignore
       }
     }
 
@@ -154,7 +150,7 @@ export default function App() {
         <HomePage
           role={role ?? undefined}
           onLogout={onLogout}
-          onAddNewCard={() => console.log("add new card")}
+          onAddNewCard={() => setScreen("add_card")}
           onCardRequests={() => console.log("card requests")}
           onUsers={() => console.log("users")}
           onGrowTogether={() => console.log("grow together")}
@@ -163,6 +159,13 @@ export default function App() {
             setGameSettings(s);
             setScreen("game");
           }}
+        />
+      )}
+
+      {screen === "add_card" && sessionToken && (
+        <AddNewCardPage
+          sessionToken={sessionToken}
+          onBack={() => setScreen("home")}
         />
       )}
 

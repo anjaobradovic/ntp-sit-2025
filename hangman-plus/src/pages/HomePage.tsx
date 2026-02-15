@@ -78,27 +78,15 @@ export default function HomePage({
           <div className="hp-actions">
             {role === "ADMIN" && (
               <>
-                <button
-                  className="hp-ghost"
-                  onClick={onAddNewCard}
-                  type="button"
-                >
+                <button className="hp-ghost" onClick={onAddNewCard} type="button">
                   Add new card
                 </button>
 
-                <button
-                  className="hp-ghost"
-                  onClick={onCardRequests}
-                  type="button"
-                >
+                <button className="hp-ghost" onClick={onCardRequests} type="button">
                   Card requests
                 </button>
 
-                <button
-                  className="hp-ghost"
-                  onClick={onUsers}
-                  type="button"
-                >
+                <button className="hp-ghost" onClick={onUsers} type="button">
                   Users
                 </button>
               </>
@@ -106,19 +94,11 @@ export default function HomePage({
 
             {role === "USER" && (
               <>
-                <button
-                  className="hp-ghost"
-                  onClick={onGrowTogether}
-                  type="button"
-                >
+                <button className="hp-ghost" onClick={onGrowTogether} type="button">
                   Grow together
                 </button>
 
-                <button
-                  className="hp-ghost"
-                  onClick={onStats}
-                  type="button"
-                >
+                <button className="hp-ghost" onClick={onStats} type="button">
                   Stats
                 </button>
               </>
@@ -246,13 +226,7 @@ type ChoiceCardProps = {
   onClick: () => void;
 };
 
-function ChoiceCard({
-  title,
-  desc,
-  icon,
-  selected,
-  onClick,
-}: ChoiceCardProps) {
+function ChoiceCard({ title, desc, icon, selected, onClick }: ChoiceCardProps) {
   return (
     <button
       className={`hp-choice ${selected ? "selected" : ""}`}

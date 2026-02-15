@@ -53,6 +53,13 @@ struct MeRow {
     pub role: String,
 }
 
+#[derive(sqlx::FromRow, Debug)]
+struct SessionUserRow {
+    pub id: i64,
+    pub role: String,
+}
+
+
 
 impl AuthService {
     pub async fn register_user(
@@ -219,6 +226,35 @@ impl AuthService {
         None => Err("Invalid session.".into()),
     }
 }
+
+pub async fn require_session_user(pool: &SqlitePool, session_token: &str) -> Result<(i64, String), String> {
+    if session_token.trim().is_empty() {
+        return Err("Missing session token.".into());
+    }
+
+    let token_hash = hash_token(session_token.trim());
+
+    let row = sqlx::query_as::<_, SessionUserRow>(
+        r#"
+        SELECT u.id as "id", u.role as "role"
+        FROM sessions s
+        JOIN users u ON u.id = s.user_id
+        WHERE s.token_hash = ?1 AND s.revoked_at IS NULL
+        ORDER BY s.created_at DESC
+        LIMIT 1
+        "#
+    )
+    .bind(token_hash)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("DB error: {e}"))?;
+
+    match row {
+        Some(r) => Ok((r.id, r.role)),
+        None => Err("Invalid session.".into()),
+    }
+}
+
 
     
 }
