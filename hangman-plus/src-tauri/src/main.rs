@@ -54,10 +54,9 @@ pub fn run() {
             commands::card_commands::admin_delete_card,
             commands::stats_commands::log_card_attempt,
             commands::stats_commands::get_user_stats,
-
-
-
-
+            commands::profile_commands::get_profile,
+            commands::profile_commands::update_profile,
+            commands::profile_commands::change_password,
 
 
 

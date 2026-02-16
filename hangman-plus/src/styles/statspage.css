@@ -1,12 +1,15 @@
+/* ================= PAGE ================= */
+
 .sp-page{
   min-height: 100vh;
   padding: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(1200px 600px at 20% 10%, rgba(46,233,201,0.10), transparent 55%),
-              radial-gradient(900px 500px at 85% 20%, rgba(46,233,201,0.07), transparent 60%),
-              var(--bg0);
+  background:
+    radial-gradient(1200px 600px at 20% 10%, rgba(46,233,201,0.10), transparent 55%),
+    radial-gradient(900px 500px at 85% 20%, rgba(46,233,201,0.07), transparent 60%),
+    var(--bg0);
 }
 
 .sp-card{
@@ -15,33 +18,19 @@
   background: var(--bg1);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  padding: 18px;
+  padding: 20px;
   color: var(--text);
 }
+
+/* ================= TOPBAR ================= */
 
 .sp-topbar{
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
 }
-
-.sp-back{
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  padding: 10px 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: transform .06s ease, background .15s ease, border-color .15s ease;
-}
-.sp-back:hover{
-  background: var(--panel2);
-  border-color: rgba(46,233,201,0.25);
-}
-.sp-back:active{ transform: translateY(1px); }
-
-.sp-head{ display: grid; gap: 2px; }
 
 .sp-title{
   font-size: 26px;
@@ -52,21 +41,74 @@
 .sp-subtitle{
   font-size: 13px;
   color: var(--muted);
+  margin-top: 2px;
 }
 
-/* metrics */
+.sp-actions{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ================= BUTTONS ================= */
+
+.sp-ghost{
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.sp-ghost:hover{
+  background: var(--panel2);
+  border-color: rgba(46,233,201,0.25);
+}
+
+.sp-primary{
+  border: 1px solid rgba(46,233,201,0.28);
+  background: rgba(46,233,201,0.14);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all .15s ease;
+}
+
+.sp-primary:hover{
+  background: rgba(46,233,201,0.22);
+}
+
+.sp-secondary{
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.sp-secondary:hover{
+  background: rgba(255,255,255,0.10);
+}
+
+/* ================= METRICS ================= */
+
 .sp-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin: 12px 0 16px;
+  margin: 14px 0 18px;
 }
 
 .sp-metric{
   border: 1px solid var(--border);
   background: var(--panel);
   border-radius: 16px;
-  padding: 14px;
+  padding: 16px;
 }
 
 .sp-metric.danger{
@@ -85,7 +127,8 @@
   font-weight: 900;
 }
 
-/* accordion */
+/* ================= ACCORDION ================= */
+
 .sp-panel{
   border: 1px solid var(--border);
   background: var(--panel);
@@ -115,6 +158,8 @@
   display: grid;
   gap: 10px;
 }
+
+/* ================= MISSED CARD ITEM ================= */
 
 .sp-item{
   display: grid;
@@ -159,7 +204,6 @@
 .sp-pill{
   border: 1px solid var(--border);
   background: rgba(46,233,201,0.10);
-  color: var(--text);
   border-radius: 999px;
   padding: 5px 10px;
   font-size: 12px;
@@ -177,9 +221,10 @@
 .sp-date-value{
   margin-top: 6px;
   font-size: 12px;
-  color: var(--text);
   opacity: 0.9;
 }
+
+/* ================= INFO / ERROR / SUCCESS ================= */
 
 .sp-info{
   margin-top: 10px;
@@ -193,13 +238,120 @@
   color: rgba(255,92,122,0.95);
 }
 
+.sp-success{
+  margin-top: 10px;
+  font-size: 13px;
+  color: rgba(46,233,201,0.95);
+}
+
 .sp-empty{
   color: var(--muted);
   font-size: 13px;
   padding: 8px 2px;
 }
 
+/* ================= PROFILE MODAL ================= */
+
+.sp-modal-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.60);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+}
+
+.sp-modal{
+  width: min(720px, 96vw);
+  border-radius: 18px;
+  background: rgba(10, 28, 27, 0.95);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sp-modal-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sp-modal-title{
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.sp-modal-sub{
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.sp-form{
+  display:flex;
+  flex-direction:column;
+  gap: 14px;
+}
+
+.sp-row{
+  display:flex;
+  gap: 14px;
+}
+
+.sp-field{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.sp-field label{
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.sp-field input{
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.sp-field input:focus{
+  border-color: rgba(46,233,201,0.35);
+  background: rgba(255,255,255,0.08);
+}
+
+.sp-form-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap: 10px;
+}
+
+.sp-divider{
+  height: 1px;
+  background: rgba(255,255,255,0.10);
+}
+
+.sp-section-title{
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* ================= RESPONSIVE ================= */
+
 @media (max-width: 860px){
   .sp-item{ grid-template-columns: 84px 1fr; }
   .sp-date{ text-align: left; }
+  .sp-row{ flex-direction: column; }
 }

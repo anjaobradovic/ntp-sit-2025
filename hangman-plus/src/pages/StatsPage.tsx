@@ -3,7 +3,8 @@ import { invoke } from "@tauri-apps/api/core";
 import "../styles/statspage.css";
 
 type Props = {
-  userId: number;
+  sessionToken: string;
+  userId: number; // mozes ostaviti stats preko userId (kao do sad)
   onBack: () => void;
 };
 
@@ -22,12 +23,44 @@ type UserStatsResponse = {
   missedCards: MissedCard[];
 };
 
-export default function StatsPage({ userId, onBack }: Props) {
+type ProfileResponse = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  role: string;
+};
+
+export default function StatsPage({ sessionToken, userId, onBack }: Props) {
+  // stats
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string>("");
   const [data, setData] = useState<UserStatsResponse | null>(null);
   const [open, setOpen] = useState(false);
 
+  // profile modal
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileErr, setProfileErr] = useState<string>("");
+  const [profileOk, setProfileOk] = useState<string>("");
+
+  const [profile, setProfile] = useState<ProfileResponse | null>(null);
+
+  // editable fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+
+  // password fields
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPassword2, setNewPassword2] = useState("");
+  const [pwErr, setPwErr] = useState<string>("");
+  const [pwOk, setPwOk] = useState<string>("");
+
+  // -------------------- load stats --------------------
   useEffect(() => {
     let mounted = true;
 
@@ -62,6 +95,114 @@ export default function StatsPage({ userId, onBack }: Props) {
     return `Missed cards (${n})`;
   }, [data]);
 
+  // -------------------- profile helpers --------------------
+  const openProfile = async () => {
+    setProfileOpen(true);
+    setProfileErr("");
+    setProfileOk("");
+    setPwErr("");
+    setPwOk("");
+    setOldPassword("");
+    setNewPassword("");
+    setNewPassword2("");
+
+    setProfileLoading(true);
+    try {
+      const p = await invoke<ProfileResponse>("get_profile", { sessionToken });
+      setProfile(p);
+
+      // init editable
+      setFirstName(p.firstName ?? "");
+      setLastName(p.lastName ?? "");
+      setUsername(p.username ?? "");
+      setEmail(p.email ?? "");
+    } catch (e: any) {
+      console.error("get_profile failed:", e);
+      setProfileErr(e?.message ?? "Failed to load profile.");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const closeProfile = () => {
+    setProfileOpen(false);
+    setProfileErr("");
+    setProfileOk("");
+    setPwErr("");
+    setPwOk("");
+  };
+
+  const saveProfile = async () => {
+    setProfileErr("");
+    setProfileOk("");
+    setPwErr("");
+    setPwOk("");
+
+    setProfileLoading(true);
+    try {
+      await invoke<void>("update_profile", {
+        req: {
+          sessionToken,
+          firstName,
+          lastName,
+          username,
+          email,
+        },
+      });
+
+      setProfileOk("Profile updated ✅");
+
+      // refresh profile (optional)
+      const p = await invoke<ProfileResponse>("get_profile", { sessionToken });
+      setProfile(p);
+      setFirstName(p.firstName ?? "");
+      setLastName(p.lastName ?? "");
+      setUsername(p.username ?? "");
+      setEmail(p.email ?? "");
+    } catch (e: any) {
+      console.error("update_profile failed:", e);
+      setProfileErr(e?.message ?? "Failed to update profile.");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const changePassword = async () => {
+    setPwErr("");
+    setPwOk("");
+
+    if (!oldPassword || !newPassword || !newPassword2) {
+      setPwErr("Fill all password fields.");
+      return;
+    }
+    if (newPassword !== newPassword2) {
+      setPwErr("New password and confirmation do not match.");
+      return;
+    }
+
+    setProfileLoading(true);
+    try {
+      await invoke<void>("change_password", {
+        req: {
+          sessionToken,
+          oldPassword,
+          newPassword,
+        },
+      });
+
+      setPwOk("Password changed ✅");
+      setOldPassword("");
+      setNewPassword("");
+      setNewPassword2("");
+    } catch (e: any) {
+      console.error("change_password failed:", e);
+      setPwErr(e?.message ?? "Failed to change password.");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // -------------------- UI --------------------
   return (
     <div className="sp-page">
       <div className="sp-card">
@@ -75,9 +216,12 @@ export default function StatsPage({ userId, onBack }: Props) {
             <button className="sp-ghost" onClick={onBack} type="button">
               ← Back
             </button>
+
+            <button className="sp-primary" onClick={openProfile} type="button">
+              My profile
+            </button>
           </div>
         </div>
-        
 
         {loading && <div className="sp-info">Loading…</div>}
         {!loading && err && <div className="sp-error">{err}</div>}
@@ -115,7 +259,11 @@ export default function StatsPage({ userId, onBack }: Props) {
 
                         <div className="sp-item-main">
                           <div className="sp-item-title">
-                            {c.category === "ORGANS" ? "🫀 Organs" : c.category === "BONES" ? "🦴 Bones" : c.category}
+                            {c.category === "ORGANS"
+                              ? "🫀 Organs"
+                              : c.category === "BONES"
+                              ? "🦴 Bones"
+                              : c.category}
                           </div>
                           <div className="sp-item-sub">
                             <span className="sp-pill">EN: {c.english}</span>
@@ -136,6 +284,108 @@ export default function StatsPage({ userId, onBack }: Props) {
           </>
         )}
       </div>
+
+      {/* ---------- PROFILE MODAL ---------- */}
+      {profileOpen && (
+        <div className="sp-modal-backdrop" onClick={closeProfile} role="presentation">
+          <div className="sp-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <div className="sp-modal-top">
+              <div>
+                <div className="sp-modal-title">My profile</div>
+                <div className="sp-modal-sub">
+                  {profile ? `@${profile.username} • ${profile.role}` : " "}
+                </div>
+              </div>
+
+              <button className="sp-ghost" onClick={closeProfile} type="button">
+                ✕
+              </button>
+            </div>
+
+            {profileLoading && <div className="sp-info">Loading…</div>}
+            {!profileLoading && profileErr && <div className="sp-error">{profileErr}</div>}
+            {!profileLoading && profileOk && <div className="sp-success">{profileOk}</div>}
+
+            <div className="sp-form">
+              <div className="sp-row">
+                <div className="sp-field">
+                  <label>First name</label>
+                  <input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                </div>
+                <div className="sp-field">
+                  <label>Last name</label>
+                  <input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="sp-row">
+                <div className="sp-field">
+                  <label>Username</label>
+                  <input value={username} onChange={(e) => setUsername(e.target.value)} />
+                </div>
+                <div className="sp-field">
+                  <label>Email</label>
+                  <input value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="sp-form-actions">
+                <button className="sp-primary" type="button" onClick={saveProfile} disabled={profileLoading}>
+                  Save changes
+                </button>
+              </div>
+
+              <div className="sp-divider" />
+
+              <div className="sp-section-title">Change password</div>
+              {pwErr && <div className="sp-error">{pwErr}</div>}
+              {pwOk && <div className="sp-success">{pwOk}</div>}
+
+              <div className="sp-row">
+                <div className="sp-field">
+                  <label>Old password</label>
+                  <input
+                    type="password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="sp-row">
+                <div className="sp-field">
+                  <label>New password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+                <div className="sp-field">
+                  <label>Confirm new password</label>
+                  <input
+                    type="password"
+                    value={newPassword2}
+                    onChange={(e) => setNewPassword2(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="sp-form-actions">
+                <button className="sp-secondary" type="button" onClick={changePassword} disabled={profileLoading}>
+                  Update password
+                </button>
+              </div>
+
+              <div className="sp-modal-bottom">
+                <button className="sp-ghost" onClick={closeProfile} type="button">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
