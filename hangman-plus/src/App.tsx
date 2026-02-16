@@ -7,6 +7,7 @@ import GamePage from "./pages/GamePage";
 import AddNewCardPage from "./pages/AddNewCardPage";
 import CardRequestsPage from "./pages/CardRequestsPage";
 import EditCardsPage from "./pages/EditCardsPage";
+import StatsPage from "./pages/StatsPage";
 
 import LoginModal from "./components/LoginModal";
 import RegisterModal from "./components/RegisterModal";
@@ -20,7 +21,8 @@ type Screen =
   | "game"
   | "add_card"
   | "edit_cards"
-  | "card_requests";
+  | "card_requests"
+  | "stats";
 
 type GameSettings = {
   category: "ORGANS" | "BONES";
@@ -44,6 +46,7 @@ export default function App() {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
 
   const showToast = (msg: string, ms = 2500) => {
     setToastMsg(msg);
@@ -60,6 +63,7 @@ export default function App() {
     const me = await safeInvoke<MeResponse>("get_me", { sessionToken: token });
     setRole(me.role);
     setUsername(me.username);
+    setUserId(me.id);
   };
 
   useEffect(() => {
@@ -75,6 +79,7 @@ export default function App() {
         setSessionToken(null);
         setRole(null);
         setUsername(null);
+        setUserId(null);
         setScreen("landing");
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,6 +99,7 @@ export default function App() {
       setSessionToken(null);
       setRole(null);
       setUsername(null);
+      setUserId(null);
       setScreen("landing");
       showToast(e?.message ?? "Failed to load profile.");
     }
@@ -113,6 +119,7 @@ export default function App() {
       setSessionToken(null);
       setRole(null);
       setUsername(null);
+      setUserId(null);
       setScreen("landing");
       showToast(e?.message ?? "Failed to load profile.");
     }
@@ -143,6 +150,7 @@ export default function App() {
     setSessionToken(null);
     setRole(null);
     setUsername(null);
+    setUserId(null);
 
     setGameSettings(null);
     setScreen("landing");
@@ -163,12 +171,16 @@ export default function App() {
           onEditCards={() => setScreen("edit_cards")}
           onCardRequests={() => setScreen("card_requests")}
           onGrowTogether={() => setScreen("add_card")}
-          onStats={() => console.log("stats")}
+          onStats={() => setScreen("stats")}
           onPlay={(s: GameSettings) => {
             setGameSettings(s);
             setScreen("game");
           }}
         />
+      )}
+
+      {screen === "stats" && userId != null && (
+        <StatsPage userId={userId} onBack={() => setScreen("home")} />
       )}
 
       {screen === "add_card" && sessionToken && (
@@ -187,8 +199,8 @@ export default function App() {
         <CardRequestsPage sessionToken={sessionToken} onBack={() => setScreen("home")} />
       )}
 
-      {screen === "game" && gameSettings && (
-        <GamePage settings={gameSettings} onExit={onExitGame} />
+      {screen === "game" && gameSettings && userId != null && (
+        <GamePage settings={gameSettings} userId={userId} onExit={onExitGame} />
       )}
 
       <LoginModal

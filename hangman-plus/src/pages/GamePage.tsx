@@ -34,10 +34,11 @@ type NextCardResponse = {
 
 type Props = {
   settings: Settings;
+  userId: number;
   onExit: () => void;
 };
 
-export default function GamePage({ settings, onExit }: Props) {
+export default function GamePage({ settings, userId, onExit }: Props) {
   const [gameId, setGameId] = useState<string | null>(null);
   const [card, setCard] = useState<Card | null>(null);
 
@@ -47,9 +48,9 @@ export default function GamePage({ settings, onExit }: Props) {
 
   const [endOfDeckOpen, setEndOfDeckOpen] = useState(false);
   const [endOfDeckText, setEndOfDeckText] = useState("");
-
   const [uiMsg, setUiMsg] = useState<string>("");
 
+  const lastLoggedRef = useRef<{ cardId: number; status: "won" | "lost" } | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const answer = useMemo(() => {
@@ -81,9 +82,9 @@ export default function GamePage({ settings, onExit }: Props) {
   }, [normalizedAnswer, guessed]);
 
   const hasLost = useMemo(() => wrong >= settings.maxWrong, [wrong, settings.maxWrong]);
-
   const canGoNext = status === "won" || status === "lost";
 
+  // START game when category changes
   useEffect(() => {
     let mounted = true;
 
@@ -94,6 +95,8 @@ export default function GamePage({ settings, onExit }: Props) {
         });
 
         if (!mounted) return;
+
+        lastLoggedRef.current = null;
 
         setGameId(res.game_id);
         setCard(res.card);
@@ -115,12 +118,48 @@ export default function GamePage({ settings, onExit }: Props) {
     };
   }, [settings.category]);
 
+  // Derive win/lose
   useEffect(() => {
     if (!card) return;
     if (hasWon) setStatus("won");
     else if (hasLost) setStatus("lost");
     else setStatus("playing");
   }, [card, hasWon, hasLost]);
+
+  // Log attempt exactly once per card when won/lost
+  useEffect(() => {
+    if (!card) return;
+    if (status !== "won" && status !== "lost") return;
+
+    if (
+      lastLoggedRef.current &&
+      lastLoggedRef.current.cardId === card.id &&
+      lastLoggedRef.current.status === status
+    ) {
+      return;
+    }
+
+    lastLoggedRef.current = { cardId: card.id, status };
+
+    (async () => {
+      try {
+        await invoke("log_card_attempt", {
+          req: {
+            userId,                 // ✅ OVDE
+            cardId: card.id,
+            isWon: status === "won",
+            category: settings.category,
+            language: settings.language,
+            difficulty: settings.difficulty,
+            wrongCount: wrong,
+            maxWrong: settings.maxWrong,
+          },
+        });
+      } catch (e) {
+        console.error("LOG_CARD_ATTEMPT failed:", e);
+      }
+    })();
+  }, [card, status, userId, wrong, settings.category, settings.language, settings.difficulty, settings.maxWrong]);
 
   const focusInput = () => inputRef.current?.focus();
 
@@ -153,7 +192,6 @@ export default function GamePage({ settings, onExit }: Props) {
     setUiMsg("");
 
     try {
-      // ✅ IMPORTANT: Tauri expects camelCase: gameId
       const res = await invoke<NextCardResponse>("next_card", { gameId });
 
       if (res.finished) {
@@ -161,6 +199,8 @@ export default function GamePage({ settings, onExit }: Props) {
         setEndOfDeckOpen(true);
         return;
       }
+
+      lastLoggedRef.current = null;
 
       setCard(res.card);
       setGuessed([]);
@@ -183,8 +223,9 @@ export default function GamePage({ settings, onExit }: Props) {
     setUiMsg("");
 
     try {
-      // ✅ IMPORTANT: camelCase
       const res = await invoke<NextCardResponse>("reset_game", { gameId });
+
+      lastLoggedRef.current = null;
 
       setCard(res.card);
       setGuessed([]);
@@ -201,7 +242,6 @@ export default function GamePage({ settings, onExit }: Props) {
   const exitGame = async () => {
     try {
       if (gameId) {
-        // ✅ IMPORTANT: camelCase
         await invoke("end_game", { gameId });
       }
     } catch (e) {
@@ -290,9 +330,7 @@ export default function GamePage({ settings, onExit }: Props) {
                   </button>
                 </div>
 
-                {uiMsg && (
-                  <div style={{ marginTop: 10, opacity: 0.8, fontSize: 13 }}>{uiMsg}</div>
-                )}
+                {uiMsg && <div style={{ marginTop: 10, opacity: 0.8, fontSize: 13 }}>{uiMsg}</div>}
 
                 <div className="gp-guessed">
                   <div className="gp-guessed-title">Guessed:</div>
