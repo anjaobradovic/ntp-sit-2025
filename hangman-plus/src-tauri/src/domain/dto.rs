@@ -3,7 +3,7 @@ use sqlx::FromRow;
 
 #[derive(Serialize)]
 pub struct LoginResponse {
-    pub session_token: String, 
+    pub session_token: String,
 }
 
 #[derive(Serialize)]
@@ -16,7 +16,7 @@ pub struct MeResponse {
 #[derive(Deserialize)]
 pub struct CreateCardInput {
     pub sessionToken: String,
-    pub category: String,  
+    pub category: String, // "ORGANS" | "BONES"
     pub english: String,
     pub latin: String,
     pub imagePath: String,
@@ -38,4 +38,23 @@ pub struct PendingCard {
     pub status: String,
     pub created_by: i64,
     pub created_at: i64,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateCardInput {
+    pub sessionToken: String,
+    pub id: i64,
+    pub english: String,
+    pub latin: String,
+    pub imagePath: String,
+}
+
+#[derive(Serialize, FromRow)]
+pub struct CardAdminItem {
+    pub id: i64,
+    pub category: String,
+    pub english: String,
+    pub latin: String,
+    pub image_path: String,
+    pub status: String,
 }

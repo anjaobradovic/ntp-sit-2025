@@ -4,6 +4,8 @@ use tauri::State;
 use crate::domain::dto::{CardResponse, CreateCardInput};
 use crate::services::card_service::CardService;
 use crate::domain::dto::PendingCard;
+use crate::domain::dto::{CardAdminItem, UpdateCardInput};
+
 
 
 #[tauri::command]
@@ -56,3 +58,29 @@ pub async fn count_pending_cards(
 ) -> Result<i64, String> {
     CardService::count_pending_cards(&pool, sessionToken).await
 }
+
+#[tauri::command]
+pub async fn list_all_cards_admin(
+    pool: State<'_, SqlitePool>,
+    sessionToken: String,
+) -> Result<Vec<CardAdminItem>, String> {
+    CardService::list_all_cards_admin(&pool, sessionToken).await
+}
+
+#[tauri::command]
+pub async fn admin_update_card(
+    pool: State<'_, SqlitePool>,
+    input: UpdateCardInput,
+) -> Result<(), String> {
+    CardService::admin_update_card(&pool, input).await
+}
+
+#[tauri::command]
+pub async fn admin_delete_card(
+    pool: State<'_, SqlitePool>,
+    sessionToken: String,
+    id: i64,
+) -> Result<(), String> {
+    CardService::admin_delete_card(&pool, sessionToken, id).await
+}
+

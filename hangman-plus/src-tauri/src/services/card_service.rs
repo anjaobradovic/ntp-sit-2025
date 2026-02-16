@@ -3,6 +3,8 @@ use time::OffsetDateTime;
 
 use crate::domain::dto::{CardResponse, CreateCardInput};
 use crate::services::auth_service::AuthService;
+use crate::domain::dto::{CardAdminItem, UpdateCardInput};
+
 
 fn now_unix() -> i64 {
     OffsetDateTime::now_utc().unix_timestamp()
@@ -172,6 +174,103 @@ pub async fn count_pending_cards(
 
     Ok(cnt)
 }
+
+pub async fn list_all_cards_admin(
+    pool: &SqlitePool,
+    sessionToken: String,
+) -> Result<Vec<CardAdminItem>, String> {
+    let (_user_id, role) = AuthService::require_session_user(pool, &sessionToken).await?;
+    if role != "ADMIN" {
+        return Err("Forbidden: admin only.".into());
+    }
+
+    let rows = sqlx::query_as::<_, CardAdminItem>(
+        r#"
+        SELECT
+            id,
+            category,
+            english,
+            latin,
+            image_path,
+            status
+        FROM cards
+        ORDER BY created_at DESC
+        "#,
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(|e| format!("DB error: {e}"))?;
+
+    Ok(rows)
+}
+
+pub async fn admin_update_card(
+    pool: &SqlitePool,
+    input: UpdateCardInput,
+) -> Result<(), String> {
+    let (_user_id, role) =
+        AuthService::require_session_user(pool, &input.sessionToken).await?;
+    if role != "ADMIN" {
+        return Err("Forbidden: admin only.".into());
+    }
+
+    if input.english.trim().is_empty()
+        || input.latin.trim().is_empty()
+        || input.imagePath.trim().is_empty()
+    {
+        return Err("Please fill in all fields before saving.".into());
+    }
+
+    let rows = sqlx::query(
+        r#"
+        UPDATE cards
+        SET english = ?1,
+            latin = ?2,
+            image_path = ?3
+        WHERE id = ?4
+        "#,
+    )
+    .bind(input.english.trim())
+    .bind(input.latin.trim())
+    .bind(input.imagePath.trim())
+    .bind(input.id)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Update failed: {e}"))?
+    .rows_affected();
+
+    if rows == 0 {
+        return Err("Card not found.".into());
+    }
+
+    Ok(())
+}
+
+pub async fn admin_delete_card(
+    pool: &SqlitePool,
+    sessionToken: String,
+    id: i64,
+) -> Result<(), String> {
+    let (_user_id, role) = AuthService::require_session_user(pool, &sessionToken).await?;
+    if role != "ADMIN" {
+        return Err("Forbidden: admin only.".into());
+    }
+
+    let rows = sqlx::query(r#"DELETE FROM cards WHERE id = ?1"#)
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Delete failed: {e}"))?
+        .rows_affected();
+
+    if rows == 0 {
+        return Err("Card not found.".into());
+    }
+
+    Ok(())
+}
+
+
 
 
 }

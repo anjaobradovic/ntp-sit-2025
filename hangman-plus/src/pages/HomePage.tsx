@@ -5,14 +5,13 @@ type Role = "ADMIN" | "USER";
 
 type Props = {
   role?: Role;
-  pendingCount?: number;
 
   onLogout?: () => void;
 
   // ADMIN actions
   onAddNewCard?: () => void;
+  onEditCards?: () => void;
   onCardRequests?: () => void;
-  onUsers?: () => void;
 
   // USER actions
   onGrowTogether?: () => void;
@@ -32,11 +31,10 @@ type Difficulty = "EASY" | "HARD" | "";
 
 export default function HomePage({
   role,
-  pendingCount,
   onLogout,
   onAddNewCard,
+  onEditCards,
   onCardRequests,
-  onUsers,
   onGrowTogether,
   onStats,
   onPlay,
@@ -66,9 +64,6 @@ export default function HomePage({
     });
   };
 
-  const pendingLabel =
-    pendingCount && pendingCount > 0 ? ` (${pendingCount})` : "";
-
   return (
     <div className="hp-page">
       <div className="hp-card">
@@ -84,15 +79,15 @@ export default function HomePage({
             {role === "ADMIN" && (
               <>
                 <button className="hp-ghost" onClick={onAddNewCard} type="button">
-                  Add new card
+                  Add card
+                </button>
+
+                <button className="hp-ghost" onClick={onEditCards} type="button">
+                  Edit cards
                 </button>
 
                 <button className="hp-ghost" onClick={onCardRequests} type="button">
-                  Card requests{pendingLabel}
-                </button>
-
-                <button className="hp-ghost" onClick={onUsers} type="button">
-                  Users
+                  Card requests
                 </button>
               </>
             )}
