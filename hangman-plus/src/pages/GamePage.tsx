@@ -145,7 +145,7 @@ export default function GamePage({ settings, userId, onExit }: Props) {
       try {
         await invoke("log_card_attempt", {
           req: {
-            userId,                 // ✅ OVDE
+            userId,               
             cardId: card.id,
             isWon: status === "won",
             category: settings.category,

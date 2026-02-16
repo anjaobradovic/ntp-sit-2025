@@ -179,9 +179,14 @@ export default function App() {
         />
       )}
 
-      {screen === "stats" && userId != null && (
-        <StatsPage userId={userId} onBack={() => setScreen("home")} />
-      )}
+      {screen === "stats" && sessionToken && userId != null && (
+        <StatsPage
+           sessionToken={sessionToken}
+           userId={userId}
+           onBack={() => setScreen("home")}
+        />
+    )}
+
 
       {screen === "add_card" && sessionToken && (
         <AddNewCardPage

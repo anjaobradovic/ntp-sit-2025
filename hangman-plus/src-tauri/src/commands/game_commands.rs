@@ -104,7 +104,7 @@ pub async fn next_card(
         .lock()
         .map_err(|_| "GamesState lock failed".to_string())?;
 
-    let run = map.get_mut(&game_id).ok_or("Nevažeći game_id.")?;
+    let run = map.get_mut(&game_id).ok_or("Wrong game_id.")?;
 
     run.idx += 1;
 
@@ -113,7 +113,7 @@ pub async fn next_card(
             card: None,
             finished: true,
             remaining: 0,
-            message: "Došli ste do kraja. Hoćete li da ponovite od početka?".to_string(),
+            message: "For now, we do not have any more cards in this category. Do you want to restart the game?".to_string(),
         });
     }
 
@@ -123,7 +123,7 @@ pub async fn next_card(
         card: Some(run.deck[run.idx].clone()),
         finished: false,
         remaining,
-        message: "Nova karta.".to_string(),
+        message: "New card.".to_string(),
     })
 }
 
