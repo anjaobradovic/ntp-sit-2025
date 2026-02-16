@@ -1,6 +1,8 @@
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use std::fs;
 use std::path::PathBuf;
+pub mod card_attempts;
+
 
 // export pod-modula (db/cards.rs)
 pub mod cards;

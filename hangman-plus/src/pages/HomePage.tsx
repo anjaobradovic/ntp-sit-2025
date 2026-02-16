@@ -228,11 +228,7 @@ type ChoiceCardProps = {
 
 function ChoiceCard({ title, desc, icon, selected, onClick }: ChoiceCardProps) {
   return (
-    <button
-      className={`hp-choice ${selected ? "selected" : ""}`}
-      onClick={onClick}
-      type="button"
-    >
+    <button className={`hp-choice ${selected ? "selected" : ""}`} onClick={onClick} type="button">
       <div className="hp-choice-top">
         <span className="hp-choice-icon">{icon}</span>
         <span className="hp-choice-title">{title}</span>
