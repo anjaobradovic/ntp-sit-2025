@@ -58,3 +58,42 @@ pub struct CardAdminItem {
     pub image_path: String,
     pub status: String,
 }
+
+// ---------- ANALYTICS DTOs ----------
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DailyPoint {
+    pub day: String, // "YYYY-MM-DD"
+    pub attempts: i64,
+    pub wins: i64,
+    pub losses: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LabelValue {
+    pub label: String,
+    pub value: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DifficultyStats {
+    pub difficulty: String,
+    pub attempts: i64,
+    pub wins: i64,
+    pub losses: i64,
+    pub win_rate: f64, // 0..1
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserAnalyticsResponse {
+    pub daily: Vec<DailyPoint>,
+    pub missed_by_category: Vec<LabelValue>,
+    pub attempts_by_category: Vec<LabelValue>,
+    pub difficulty: Vec<DifficultyStats>,
+    pub wrong_count_dist: Vec<LabelValue>,
+}
+
