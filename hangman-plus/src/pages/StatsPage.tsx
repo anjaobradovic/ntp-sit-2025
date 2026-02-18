@@ -1,10 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  LineChart,
+  Line,
+} from "recharts";
 import "../styles/statspage.css";
 
 type Props = {
   sessionToken: string;
-  userId: number; // mozes ostaviti stats preko userId (kao do sad)
+  userId: number;
   onBack: () => void;
 };
 
@@ -32,12 +45,34 @@ type ProfileResponse = {
   role: string;
 };
 
+// -------- analytics types (must match Rust camelCase) --------
+type DailyPoint = { day: string; attempts: number; wins: number; losses: number };
+type LabelValue = { label: string; value: number };
+type DifficultyStats = {
+  difficulty: string;
+  attempts: number;
+  wins: number;
+  losses: number;
+  winRate: number; // 0..1
+};
+type UserAnalyticsResponse = {
+  daily: DailyPoint[];
+  missedByCategory: LabelValue[];
+  attemptsByCategory: LabelValue[];
+  difficulty: DifficultyStats[];
+  wrongCountDist: LabelValue[];
+};
+
 export default function StatsPage({ sessionToken, userId, onBack }: Props) {
   // stats
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string>("");
   const [data, setData] = useState<UserStatsResponse | null>(null);
   const [open, setOpen] = useState(false);
+
+  // analytics
+  const [analytics, setAnalytics] = useState<UserAnalyticsResponse | null>(null);
+  const [analyticsErr, setAnalyticsErr] = useState<string>("");
 
   // profile modal
   const [profileOpen, setProfileOpen] = useState(false);
@@ -86,6 +121,28 @@ export default function StatsPage({ sessionToken, userId, onBack }: Props) {
     };
   }, [userId]);
 
+  // -------------------- load analytics --------------------
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      setAnalyticsErr("");
+      try {
+        const res = await invoke<UserAnalyticsResponse>("get_user_analytics", { userId, days: 14 });
+        if (!mounted) return;
+        setAnalytics(res);
+      } catch (e: any) {
+        console.error("get_user_analytics failed:", e);
+        if (!mounted) return;
+        setAnalyticsErr(e?.message ?? "Failed to load analytics.");
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [userId]);
+
   const guessed = data?.guessedCount ?? 0;
   const missed = data?.missedCount ?? 0;
 
@@ -94,6 +151,24 @@ export default function StatsPage({ sessionToken, userId, onBack }: Props) {
     const n = data.missedCards.length;
     return `Missed cards (${n})`;
   }, [data]);
+
+  // chart data helpers
+  const donutData = useMemo(
+    () => [
+      { name: "Guessed", value: guessed },
+      { name: "Missed", value: missed },
+    ],
+    [guessed, missed]
+  );
+
+  const winRateByDifficulty = useMemo(() => {
+    if (!analytics) return [];
+    return analytics.difficulty.map((d) => ({
+      label: d.difficulty,
+      winRatePct: Math.round(d.winRate * 100),
+      attempts: d.attempts,
+    }));
+  }, [analytics]);
 
   // -------------------- profile helpers --------------------
   const openProfile = async () => {
@@ -111,7 +186,6 @@ export default function StatsPage({ sessionToken, userId, onBack }: Props) {
       const p = await invoke<ProfileResponse>("get_profile", { sessionToken });
       setProfile(p);
 
-      // init editable
       setFirstName(p.firstName ?? "");
       setLastName(p.lastName ?? "");
       setUsername(p.username ?? "");
@@ -141,18 +215,11 @@ export default function StatsPage({ sessionToken, userId, onBack }: Props) {
     setProfileLoading(true);
     try {
       await invoke<void>("update_profile", {
-        req: {
-          sessionToken,
-          firstName,
-          lastName,
-          username,
-          email,
-        },
+        req: { sessionToken, firstName, lastName, username, email },
       });
 
       setProfileOk("Profile updated ✅");
 
-      // refresh profile (optional)
       const p = await invoke<ProfileResponse>("get_profile", { sessionToken });
       setProfile(p);
       setFirstName(p.firstName ?? "");
@@ -183,11 +250,7 @@ export default function StatsPage({ sessionToken, userId, onBack }: Props) {
     setProfileLoading(true);
     try {
       await invoke<void>("change_password", {
-        req: {
-          sessionToken,
-          oldPassword,
-          newPassword,
-        },
+        req: { sessionToken, oldPassword, newPassword },
       });
 
       setPwOk("Password changed ✅");
@@ -240,7 +303,99 @@ export default function StatsPage({ sessionToken, userId, onBack }: Props) {
               </div>
             </div>
 
-            <div className="sp-panel">
+            {/* ------- Analytics charts ------- */}
+            {analyticsErr && <div className="sp-error" style={{ marginTop: 12 }}>{analyticsErr}</div>}
+
+            {analytics && (
+              <div className="sp-grid" style={{ marginTop: 14 }}>
+                <div className="sp-panel">
+                  <div className="sp-metric-label" style={{ marginBottom: 10 }}>
+                    Guessed vs Missed
+                  </div>
+                  <div style={{ height: 220 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={donutData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} />
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="sp-panel">
+                  <div className="sp-metric-label" style={{ marginBottom: 10 }}>
+                    Missed by category
+                  </div>
+                  <div style={{ height: 220 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={analytics.missedByCategory}>
+                        <CartesianGrid />
+                        <XAxis dataKey="label" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip />
+                        <Bar dataKey="value" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="sp-panel" style={{ gridColumn: "1 / -1" }}>
+                  <div className="sp-metric-label" style={{ marginBottom: 10 }}>
+                    Activity (last 14 days)
+                  </div>
+                  <div style={{ height: 260 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={analytics.daily}>
+                        <CartesianGrid />
+                        <XAxis dataKey="day" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="attempts" />
+                        <Line type="monotone" dataKey="wins" />
+                        <Line type="monotone" dataKey="losses" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="sp-panel">
+                  <div className="sp-metric-label" style={{ marginBottom: 10 }}>
+                    Winrate by difficulty
+                  </div>
+                  <div style={{ height: 220 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={winRateByDifficulty}>
+                        <CartesianGrid />
+                        <XAxis dataKey="label" />
+                        <YAxis allowDecimals={false} domain={[0, 100]} />
+                        <Tooltip />
+                        <Bar dataKey="winRatePct" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="sp-panel">
+                  <div className="sp-metric-label" style={{ marginBottom: 10 }}>
+                    Mistakes distribution
+                  </div>
+                  <div style={{ height: 220 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={analytics.wrongCountDist}>
+                        <CartesianGrid />
+                        <XAxis dataKey="label" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip />
+                        <Bar dataKey="value" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ------- Missed cards list ------- */}
+            <div className="sp-panel" style={{ marginTop: 14 }}>
               <button className="sp-accordion" type="button" onClick={() => setOpen((v) => !v)}>
                 <span>{missedLabel}</span>
                 <span className="sp-acc-icon">{open ? "▾" : "▸"}</span>
@@ -292,9 +447,7 @@ export default function StatsPage({ sessionToken, userId, onBack }: Props) {
             <div className="sp-modal-top">
               <div>
                 <div className="sp-modal-title">My profile</div>
-                <div className="sp-modal-sub">
-                  {profile ? `@${profile.username} • ${profile.role}` : " "}
-                </div>
+                <div className="sp-modal-sub">{profile ? `@${profile.username} • ${profile.role}` : " "}</div>
               </div>
 
               <button className="sp-ghost" onClick={closeProfile} type="button">
@@ -344,30 +497,18 @@ export default function StatsPage({ sessionToken, userId, onBack }: Props) {
               <div className="sp-row">
                 <div className="sp-field">
                   <label>Old password</label>
-                  <input
-                    type="password"
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                  />
+                  <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
                 </div>
               </div>
 
               <div className="sp-row">
                 <div className="sp-field">
                   <label>New password</label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
+                  <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                 </div>
                 <div className="sp-field">
                   <label>Confirm new password</label>
-                  <input
-                    type="password"
-                    value={newPassword2}
-                    onChange={(e) => setNewPassword2(e.target.value)}
-                  />
+                  <input type="password" value={newPassword2} onChange={(e) => setNewPassword2(e.target.value)} />
                 </div>
               </div>
 

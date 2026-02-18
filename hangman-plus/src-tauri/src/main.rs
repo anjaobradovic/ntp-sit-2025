@@ -24,7 +24,6 @@ pub fn run() {
                 let pool = db::init_db(db_path).await?;
                 app_handle.manage(pool);
 
-              
                 app_handle.manage(commands::game_commands::GamesState::default());
 
                 Ok::<(), String>(())
@@ -34,15 +33,20 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            // auth
             commands::auth_commands::register_user,
             commands::auth_commands::login_user,
             commands::auth_commands::validate_session,
             commands::auth_commands::logout,
+            commands::auth_commands::get_me,
+
+            // game
             commands::game_commands::start_game,
             commands::game_commands::next_card,
             commands::game_commands::reset_game,
             commands::game_commands::end_game,
-            commands::auth_commands::get_me,
+
+            // cards
             commands::card_commands::admin_add_card,
             commands::card_commands::user_request_card,
             commands::card_commands::approve_card,
@@ -52,15 +56,16 @@ pub fn run() {
             commands::card_commands::list_all_cards_admin,
             commands::card_commands::admin_update_card,
             commands::card_commands::admin_delete_card,
+
+            // stats + analytics
             commands::stats_commands::log_card_attempt,
             commands::stats_commands::get_user_stats,
+            commands::stats_commands::get_user_analytics,
+
+            // profile
             commands::profile_commands::get_profile,
             commands::profile_commands::update_profile,
             commands::profile_commands::change_password,
-
-
-
-               
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
